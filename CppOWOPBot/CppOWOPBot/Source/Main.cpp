@@ -7,6 +7,8 @@
 #include <SFML/Graphics.hpp>
 #include "IncImgui.h"
 
+#include "Bots/BotManager.h"
+
 int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
@@ -17,6 +19,10 @@ int main()
 
 	ImGui::SFML::Init(window);
 	
+
+	BotManager manager;
+	manager.Connect("wss://ourworldofpixels.com");
+
 	while (window.isOpen())
 	{
 		sf::Event e;
@@ -29,7 +35,7 @@ int main()
 		}
 
 		ImGui::SFML::Update(window, frameClock.restart());
-
+		manager.Poll();
 		
 
 		window.clear();

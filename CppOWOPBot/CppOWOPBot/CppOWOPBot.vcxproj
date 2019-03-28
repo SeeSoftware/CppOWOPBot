@@ -119,13 +119,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Bots\BotManager.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\OWOP\Protocol.cpp" />
+    <ClCompile Include="Source\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Bots\BotManager.h" />
     <ClInclude Include="Source\IncImgui.h" />
     <ClInclude Include="Source\OWOP\Protocol.h" />
     <ClInclude Include="Source\OWOP\Structs.h" />
+    <ClInclude Include="Source\Util.h" />
+    <ClInclude Include="Source\WebsocketppDefs.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

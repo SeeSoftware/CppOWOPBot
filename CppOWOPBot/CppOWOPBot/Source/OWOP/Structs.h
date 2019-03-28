@@ -6,25 +6,16 @@ namespace OWOP
 {
 	typedef uint32_t CursorID;
 	typedef uint8_t ToolID;
+	typedef uint8_t RankID;
 
+	constexpr size_t MAX_WORLDNAME_LENGTH = 24;
 	constexpr int CHUNK_SIZE = 16;
 	constexpr uint16_t WORLD_VERIFICATION = 4321; //4321,1234
 	constexpr char CHAT_VERIFICATION[] = "\x0A";
 	constexpr char TOKEN_VERIFICATION[] = "CaptchA";
 
-	enum PacketOpCode : uint8_t
-	{
-		SetID,
-		WorldUpdate,
-		ChunkLoad,
-		Teleport,
-		SetRank,
-		Captcha,
-		SetPQuota,
-		ChunkProtected
-	};
 
-	enum CaptchaState : uint8_t
+	enum class CaptchaState : uint8_t
 	{
 		CA_WAITING,
 		CA_VERIFYING,
@@ -56,7 +47,7 @@ namespace OWOP
 	struct CursorData
 	{
 		CursorData() = default;
-		CursorData(CursorID id, const sf::Vector2i &subPos, Color col = Color(255, 255, 255), ToolID tool = 0) : id(id), subPos(subPos), color(col), tool(tool) {};
+		CursorData(CursorID id, const sf::Vector2i &subPos,const Color &col = Color(255, 255, 255), ToolID tool = 0) : id(id), subPos(subPos), color(col), tool(tool) {};
 
 		CursorID id;
 		sf::Vector2i subPos; //in pixel * 16 positions
@@ -70,7 +61,7 @@ namespace OWOP
 		TileUpdate() = default;
 
 		CursorID id;
-		sf::Vector2i pos;
+		sf::Vector2i worldPos;
 		Color pxCol;
 	};
 
