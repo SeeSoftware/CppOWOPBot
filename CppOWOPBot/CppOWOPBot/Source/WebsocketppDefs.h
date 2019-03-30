@@ -20,4 +20,5 @@ namespace Ws
 	using Client = websocketpp::client<websocketpp::config::asio_tls_client>;
 	using MessagePtr = websocketpp::config::asio_tls_client::message_type::ptr;
 	using ContextPtr = std::shared_ptr<boost::asio::ssl::context>;
+	using ConnectionHdl = websocketpp::connection_hdl;
 }

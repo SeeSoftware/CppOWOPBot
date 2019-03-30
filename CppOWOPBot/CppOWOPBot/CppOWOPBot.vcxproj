@@ -120,12 +120,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\Bots\BotManager.cpp" />
+    <ClCompile Include="Source\Bots\ConnectionBot.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\OWOP\Protocol.cpp" />
     <ClCompile Include="Source\Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bots\BotManager.h" />
+    <ClInclude Include="Source\Bots\ConnectionBot.h" />
+    <ClInclude Include="Source\Bots\IBot.h" />
     <ClInclude Include="Source\IncImgui.h" />
     <ClInclude Include="Source\OWOP\Protocol.h" />
     <ClInclude Include="Source\OWOP\Structs.h" />

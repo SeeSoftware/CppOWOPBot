@@ -27,6 +27,9 @@
     <ClCompile Include="Source\Util.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Bots\ConnectionBot.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\IncImgui.h">
@@ -45,6 +48,12 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="Source\Bots\BotManager.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Bots\IBot.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Bots\ConnectionBot.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
