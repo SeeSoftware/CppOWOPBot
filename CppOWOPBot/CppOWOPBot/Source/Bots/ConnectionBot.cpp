@@ -1,17 +1,22 @@
 #include "ConnectionBot.h"
 #include "BotManager.h"
+#include "Util.h"
+#include "OWOP/Protocol.h"
 
 ConnectionBot::~ConnectionBot()
 {
 	Disconnect();
 }
 
-void ConnectionBot::Connect()
+void ConnectionBot::Connect(const std::string &uri)
 {
+	Disconnect();
+	mUri = uri;
+
 	try
 	{
 		websocketpp::lib::error_code ec;
-		Ws::Client::connection_ptr connection = mManager.GetEndpoint().get_connection(mManager.GetCurrentUri(), ec);
+		Ws::Client::connection_ptr connection = mManager.GetEndpoint().get_connection(uri, ec);
 		if (ec)
 		{
 			std::cout << "could not create connection because: " << ec.message() << std::endl;
@@ -32,6 +37,7 @@ void ConnectionBot::Connect()
 
 		mConnectionHdl = connection;
 
+		mConnectionState = ConnectionState::Connecting;
 	}
 	catch (websocketpp::exception const & e)
 	{
@@ -41,10 +47,15 @@ void ConnectionBot::Connect()
 
 void ConnectionBot::Disconnect()
 {
+	
+	if (mConnectionState == ConnectionState::Disconnected)
+		return;
+
 	try
 	{
-		mManager.GetEndpoint().pause_reading(mConnectionHdl);
-		mManager.GetEndpoint().close(mConnectionHdl, websocketpp::close::status::normal, "Disconnected");
+		//mManager.GetEndpoint().pause_reading(mConnectionHdl);
+		mManager.GetEndpoint().close(mConnectionHdl, websocketpp::close::status::going_away, "Disconnected");
+		mConnectionState = ConnectionState::Disconnecting;
 	}
 	catch (websocketpp::exception const & e)
 	{
@@ -54,11 +65,17 @@ void ConnectionBot::Disconnect()
 
 void ConnectionBot::Update(float dt)
 {
+	if (mConnectionState == ConnectionState::Connected)
+		Disconnect();
+
+	if (mConnectionState == ConnectionState::Disconnected)
+		Connect(mUri);
 }
 
-bool ConnectionBot::IsWsConnected()
+
+ConnectionBot::ConnectionState ConnectionBot::GetState()
 {
-	return mWsConnected;
+	return mConnectionState;
 }
 
 bool ConnectionBot::IsOWOPConnected()
@@ -68,19 +85,48 @@ bool ConnectionBot::IsOWOPConnected()
 
 void ConnectionBot::WSMessageHandler(Ws::ConnectionHdl hdl, Ws::MessagePtr msg)
 {
+	std::cout << Util::HexDump((uint8_t*)msg->get_payload().data(), msg->get_payload().size()).str();
+
+	std::shared_ptr<Protocol::IS2CMessage> message = Protocol::ParsePacket(msg);
+
+	switch (message->opcode)
+	{
+		case Protocol::PacketOpCode::Captcha:
+		{
+			std::cout << "Received Captcha Request \n";
+			std::shared_ptr<Protocol::CaptchaRequest> castMsg = Protocol::DowncastMessage<Protocol::CaptchaRequest>(message);
+
+			std::cout << "State: " << (int)castMsg->state << "\n";
+
+			break;
+		}
+		default:
+			std::cout << "Unknown message: " << (int)message->opcode << "\n";
+			break;
+	}
 }
 
 void ConnectionBot::WSOpenHandler(Ws::ConnectionHdl hdl)
 {
-	mWsConnected = true;
+	mConnectionState = ConnectionState::Connected;
 }
 
 void ConnectionBot::WSCloseHandler(Ws::ConnectionHdl hdl)
 {
-	mWsConnected = false;
+	mConnectionState = ConnectionState::Disconnected;
 }
 
 void ConnectionBot::WSFailHandler(Ws::ConnectionHdl hdl)
 {
-	mWsConnected = false;
+	try
+	{
+		Ws::Client::connection_ptr conn = mManager.GetEndpoint().get_con_from_hdl(hdl);
+		std::cout << "Connection Fail: " << conn->get_ec().message() << "\n";
+	}
+	catch (websocketpp::exception const & e)
+	{
+		std::cout << "Exception in FailHandler: " << e.what() << std::endl;
+	}
+
+	mConnectionState = ConnectionState::Disconnected;
 }

@@ -4,20 +4,21 @@
 #include "OWOP/Protocol.h"
 
 BotManager::BotManager()
-	:mBot(*this)
 {
 	try
 	{
 		// Set logging to be pretty verbose (everything except message payloads)
-		mEndpoint.set_access_channels(websocketpp::log::alevel::all);
-		mEndpoint.clear_access_channels(websocketpp::log::alevel::frame_payload);
+		//mEndpoint.set_access_channels(websocketpp::log::alevel::all);
+		//mEndpoint.clear_access_channels(websocketpp::log::alevel::frame_payload);
+
+		mEndpoint.clear_access_channels(websocketpp::log::alevel::all);
 
 		// Initialize ASIO
 		mEndpoint.init_asio();
 		mEndpoint.set_tls_init_handler(bind(&OnTlsInit));
 
-		// Register our message handler
-		mEndpoint.set_message_handler(bind(&BotManager::OnMessage, this, ::_1, ::_2));
+		mEndpoint.start_perpetual();
+		mRunThread = std::thread([this]() { mEndpoint.run(); });
 	}
 	catch (websocketpp::exception const & e)
 	{
@@ -25,48 +26,41 @@ BotManager::BotManager()
 	}
 }
 
-void BotManager::Connect(const std::string & uri)
+BotManager::~BotManager()
 {
-	mUri = uri;
-		
+	try
+	{
+		//disconnect all bots
+		for (auto &x : mBots)
+			x->Disconnect();
 
-		
-		
-	
+		mEndpoint.stop_perpetual();
+		mRunThread.join();
+
+	}
+	catch (websocketpp::exception const & e)
+	{
+		std::cout << "Exception in BotManager Destructor: " << e.what() << std::endl;
+	}
 }
+
+void BotManager::Connect(const std::string & uri, int numbots)
+{
+	for (int i = 0; i < numbots; i++)
+	{
+		mBots.emplace_back(std::make_unique<ConnectionBot>(*this));
+		mBots.back()->Connect(uri);
+	}
+}
+
+
 
 void BotManager::Update(float dt)
 {
+	for (auto &x : mBots)
+		x->Update(dt);
 }
 
-void BotManager::Poll()
-{
-	mWsClient.poll();
-}
-
-void BotManager::OnMessage(websocketpp::connection_hdl hdl, Ws::MessagePtr msg)
-{
-	std::cout << Util::HexDump((uint8_t*)msg->get_payload().data(), msg->get_payload().size()).str();
-
-	std::shared_ptr<Protocol::IS2CMessage> message = Protocol::ParsePacket(msg);
-	
-	switch (message->opcode)
-	{
-		case Protocol::PacketOpCode::Captcha:
-		{
-			std::cout << "Received Captcha Request \n";
-			std::shared_ptr<Protocol::CaptchaRequest> castMsg = Protocol::DowncastMessage<Protocol::CaptchaRequest>(message);
-
-			std::cout << "State: " << (int)castMsg->state << "\n";
-
-			break;
-		}
-		default:
-			std::cout << "Unknown message: " << (int)message->opcode << "\n";  
-			break;
-	}
-
-}
 
 Ws::ContextPtr BotManager::OnTlsInit()
 {

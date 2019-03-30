@@ -2,6 +2,9 @@
 #include <websocketpp/config/asio_client.hpp>
 #include <websocketpp/client.hpp>
 #include <string>
+#include <thread>
+#include <vector>
+#include <memory>
 #include "WebsocketppDefs.h"
 #include "ConnectionBot.h"
 
@@ -10,21 +13,18 @@ class BotManager
 public:
 
 	BotManager();
-	~BotManager() = default;
+	~BotManager();
 
-	void Connect(const std::string &uri);
+	void Connect(const std::string &uri,int numbots = 1);
 	void Update(float dt);
 
 	Ws::Client &GetEndpoint() { return mEndpoint; }
-	const std::string &GetCurrentUri() { return mUri; }
-
 private:
 
-	void OnMessage(websocketpp::connection_hdl hdl, Ws::MessagePtr msg);
 	static Ws::ContextPtr OnTlsInit();
 
-	std::string mUri;
+	std::thread mRunThread;
 
 	Ws::Client mEndpoint;
-	ConnectionBot mBot;
+	std::vector<std::unique_ptr<ConnectionBot>> mBots;
 };

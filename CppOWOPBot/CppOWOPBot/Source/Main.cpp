@@ -18,10 +18,10 @@ int main()
 	window.create(sf::VideoMode(1280, 720), "OWOP Bot");
 
 	ImGui::SFML::Init(window);
-	
+
 
 	BotManager manager;
-	manager.Connect("wss://ourworldofpixels.com");
+	manager.Connect("wss://ourworldofpixels.com",3);
 
 	while (window.isOpen())
 	{
@@ -34,15 +34,15 @@ int main()
 			ImGui::SFML::ProcessEvent(e);
 		}
 
-		ImGui::SFML::Update(window, frameClock.restart());
-		manager.Poll();
-		
+		sf::Time frameTime = frameClock.restart();
+		ImGui::SFML::Update(window, frameTime);
+		manager.Update(frameTime.asSeconds());
 
 		window.clear();
 
 		ImGui::Begin("Test");
 		ImGui::End();
-		
+
 		ImGui::DrawRect(sf::FloatRect(40, 40, 100, 100), sf::Color(255, 0, 0));
 
 		ImGui::SFML::Render(window);
@@ -52,6 +52,7 @@ int main()
 	}
 
 	ImGui::SFML::Shutdown();
-
+	
 	return 0;
+
 }
