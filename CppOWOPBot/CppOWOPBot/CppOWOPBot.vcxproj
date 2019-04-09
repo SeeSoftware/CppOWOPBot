@@ -125,19 +125,56 @@
   <ItemGroup>
     <ClCompile Include="Source\Bots\BotManager.cpp" />
     <ClCompile Include="Source\Bots\ConnectionBot.cpp" />
+    <ClCompile Include="Source\Bots\PlaceBot.cpp" />
+    <ClCompile Include="Source\Imgui\imgui.cpp" />
+    <ClCompile Include="Source\Imgui\imgui_draw.cpp" />
+    <ClCompile Include="Source\Imgui\imgui_stdlib.cpp" />
+    <ClCompile Include="Source\Imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Source\Imgui\sfml-imgui\imgui-SFML.cpp" />
+    <ClCompile Include="Source\Imgui\TextEditor.cpp" />
+    <ClCompile Include="Source\Lua\LuaEnviornment.cpp" />
+    <ClCompile Include="Source\UInterface\Tools\ShapeTool.cpp" />
+    <ClCompile Include="Source\UInterface\UInterface.cpp" />
     <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\OWOP\Bucket.cpp" />
     <ClCompile Include="Source\OWOP\Protocol.cpp" />
+    <ClCompile Include="Source\ProxyManager\Proxylist.cpp" />
+    <ClCompile Include="Source\TaskManager\TaskManager.cpp" />
     <ClCompile Include="Source\Util.cpp" />
+    <ClCompile Include="Source\World\Chunk.cpp" />
+    <ClCompile Include="Source\World\World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Bots\BotManager.h" />
     <ClInclude Include="Source\Bots\ConnectionBot.h" />
     <ClInclude Include="Source\Bots\IBot.h" />
-    <ClInclude Include="Source\IncImgui.h" />
+    <ClInclude Include="Source\Bots\PlaceBot.h" />
+    <ClInclude Include="Source\Imgui\imconfig.h" />
+    <ClInclude Include="Source\Imgui\imgui.h" />
+    <ClInclude Include="Source\Imgui\imgui_internal.h" />
+    <ClInclude Include="Source\Imgui\imgui_stdlib.h" />
+    <ClInclude Include="Source\Imgui\imstb_rectpack.h" />
+    <ClInclude Include="Source\Imgui\imstb_textedit.h" />
+    <ClInclude Include="Source\Imgui\imstb_truetype.h" />
+    <ClInclude Include="Source\Imgui\sfml-imgui\imconfig-SFML.hpp" />
+    <ClInclude Include="Source\Imgui\sfml-imgui\imgui-SFML.hpp" />
+    <ClInclude Include="Source\Imgui\TextEditor.h" />
+    <ClInclude Include="Source\Lua\LuaEnviornment.h" />
+    <ClInclude Include="Source\UInterface\Tools\ITool.h" />
+    <ClInclude Include="Source\UInterface\Tools\ShapeTool.h" />
+    <ClInclude Include="Source\UInterface\UInterface.h" />
+    <ClInclude Include="Source\Imgui\IncImgui.h" />
+    <ClInclude Include="Source\OWOP\Bucket.h" />
     <ClInclude Include="Source\OWOP\Protocol.h" />
     <ClInclude Include="Source\OWOP\Structs.h" />
+    <ClInclude Include="Source\ProxyManager\Proxylist.h" />
+    <ClInclude Include="Source\SFExtraMath.h" />
+    <ClInclude Include="Source\TaskManager\Task.h" />
+    <ClInclude Include="Source\TaskManager\TaskManager.h" />
     <ClInclude Include="Source\Util.h" />
     <ClInclude Include="Source\WebsocketppDefs.h" />
+    <ClInclude Include="Source\World\Chunk.h" />
+    <ClInclude Include="Source\World\World.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

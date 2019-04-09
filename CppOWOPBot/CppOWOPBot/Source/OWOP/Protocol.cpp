@@ -31,13 +31,13 @@ namespace Protocol
 		{
 			OWOP::TileUpdate tData;
 			memcpy(&tData, data.data() + 2 + off + j * 15, sizeof(OWOP::TileUpdate));
-			tileUpdates[i] = tData;
+			tileUpdates[j] = tData;
 		}
 
 
 		//disconnects
-		disconnects.resize(view.GetValue<uint8_t>(off));
 		off += view.GetValue<uint16_t>(off) * 15 + 2;
+		disconnects.resize(view.GetValue<uint8_t>(off));
 		for (int i = view.GetValue<uint8_t>(off); i--;)
 		{
 			uint32_t id = view.GetValue<uint32_t>(1 + off + i * 4);
@@ -57,7 +57,7 @@ namespace Protocol
 	std::vector<OWOP::Color> ChunkData::Decompress() const
 	{
 		size_t len = compressedData[1] << 8 | compressedData[0];
-		std::vector<OWOP::Color> decompressedDataVec(len);
+		std::vector<OWOP::Color> decompressedDataVec(len/3);
 		uint8_t* decompressedData = (uint8_t*)decompressedDataVec.data(); //might be a bit unsafe but operator[] is unsafe anyways :D (pretty much the same thing)
 
 		int numRepeates = compressedData[3] << 8 | compressedData[2];
@@ -93,7 +93,8 @@ namespace Protocol
 
 	void ChunkData::Deserialize(const std::vector<uint8_t>& data)
 	{
-		memcpy(this, data.data(), 10); //copies opcode, xy, locked
+		compressedData.resize(data.size() - 10);
+		memcpy(&opcode, data.data(), 10); //copies opcode, xy, locked
 		memcpy(compressedData.data(),data.data() + 10, data.size() - 10);
 	}
 

@@ -5,9 +5,12 @@
 #include <iostream>
 
 #include <SFML/Graphics.hpp>
-#include "IncImgui.h"
+#include "Imgui/IncImgui.h"
 
+#include "UInterface/UInterface.h"
 #include "Bots/BotManager.h"
+
+#include "UInterface/Tools/ShapeTool.h"
 
 int main()
 {
@@ -15,14 +18,23 @@ int main()
 
 	sf::Clock frameClock;
 	sf::RenderWindow window;
-	window.create(sf::VideoMode(1280, 720), "OWOP Bot");
+
+	sf::ContextSettings settings;
+	settings.antialiasingLevel = 4;
+	window.create(sf::VideoMode(1280, 720), "OWOP Bot",7U, settings);
 
 	ImGui::SFML::Init(window);
 
 
 	BotManager manager;
-	manager.Connect("wss://ourworldofpixels.com",3);
+	manager.GetProxyList().LoadProxyfile("proxylist.txt");
+	manager.GetProxyList().SetSettings(5);
+	manager.Connect("wss://ourworldofpixels.com", 1, false);
 
+	UInterface ui(manager,window);
+	ui.AddTool<ShapeTool>(); 
+
+	
 	while (window.isOpen())
 	{
 		sf::Event e;
@@ -32,18 +44,41 @@ int main()
 				window.close();
 
 			ImGui::SFML::ProcessEvent(e);
+			ui.ProcessEvent(e);
+			
 		}
 
+		////////////////////////////////////////////////////////////////////////
+		sf::Vector2i topleft((int)((-window.getView().getSize().x / 2.0f) + window.getView().getCenter().x), (int)((-window.getView().getSize().y / 2.0f) + window.getView().getCenter().y));
+		sf::Vector2i bottomright((int)((window.getView().getSize().x / 2.0f) + window.getView().getCenter().x), (int)((window.getView().getSize().y / 2.0f) + window.getView().getCenter().y));
+
+		sf::IntRect scrRect(topleft - sf::Vector2i(OWOP::CHUNK_SIZE, OWOP::CHUNK_SIZE), bottomright - (topleft - sf::Vector2i(OWOP::CHUNK_SIZE, OWOP::CHUNK_SIZE)));
+		
+		for(int y = scrRect.top / OWOP::CHUNK_SIZE; y < (scrRect.top + scrRect.height) / OWOP::CHUNK_SIZE; y++)
+			for (int x = scrRect.left / OWOP::CHUNK_SIZE; x < (scrRect.left + scrRect.width) / OWOP::CHUNK_SIZE; x++)
+			{
+				sf::Vector2i chunkPos = sf::Vector2i(x, y);
+				if (!manager.GetWorld().ChunkExists(chunkPos))
+				{
+					manager.GetWorld().CreateChunk(chunkPos);
+					manager.GetTaskManager().PushTask(Task(Task::RequestChunk, chunkPos));
+				}
+			}
+		////////////////////////////////////////////////////////////////////////
+
+		/////////////////
 		sf::Time frameTime = frameClock.restart();
+
 		ImGui::SFML::Update(window, frameTime);
 		manager.Update(frameTime.asSeconds());
 
+		ui.Update(frameTime.asSeconds());
+		////////////////////////
+
+
 		window.clear();
-
-		ImGui::Begin("Test");
-		ImGui::End();
-
-		ImGui::DrawRect(sf::FloatRect(40, 40, 100, 100), sf::Color(255, 0, 0));
+		manager.Draw(window);
+		ui.DrawGui();
 
 		ImGui::SFML::Render(window);
 		window.display();

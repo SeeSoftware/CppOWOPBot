@@ -44,7 +44,9 @@ namespace Protocol
 		IC2SMessage() = default;
 		virtual ~IC2SMessage() = default;
 
-		virtual websocketpp::frame::opcode::value WSOpcode() = 0;
+		uint8_t __base;
+
+		virtual websocketpp::frame::opcode::value WSOpcode() const = 0;
 		virtual std::vector<uint8_t> Serialize() const = 0;
 	};
 
@@ -62,8 +64,9 @@ namespace Protocol
 			constexpr uintptr_t VTablePtrSize = sizeof(IC2SMessage); //A bit hacky: offsetting memcpy by vtableptr size
 
 			std::vector<uint8_t> vec(sizeof(T) - VTablePtrSize);
-			memcpy(vec.data(), this + VTablePtrSize, sizeof(T) - VTablePtrSize);
+			memcpy(vec.data(), &__base+1, sizeof(T) - VTablePtrSize);
 
+			return vec;
 		}
 	};
 
@@ -90,14 +93,14 @@ namespace Protocol
 
 		virtual void S2CMessage::Deserialize(const std::vector<uint8_t>& data)
 		{
-			constexpr uintptr_t VTablePtrSize = sizeof(IC2SMessage); //(uintptr_t)&opcode - (uintptr_t)this; //A bit hacky: offsetting memcpy by vtableptr size
+			constexpr uintptr_t VTablePtrSize = sizeof(IC2SMessage)-1; //(uintptr_t)&opcode - (uintptr_t)this; //A bit hacky: offsetting memcpy by vtableptr size
 
 			memcpy(&opcode, data.data(), std::min(sizeof(T) - VTablePtrSize, data.size()));
 		}
 
 		virtual std::vector<uint8_t> S2CMessage::Serialize() const
 		{
-			constexpr uintptr_t VTablePtrSize = sizeof(IC2SMessage);//(uintptr_t)&opcode - (uintptr_t)this; //A bit hacky: offsetting memcpy by vtableptr size
+			constexpr uintptr_t VTablePtrSize = sizeof(IC2SMessage)-1;//(uintptr_t)&opcode - (uintptr_t)this; //A bit hacky: offsetting memcpy by vtableptr size
 
 			std::vector<uint8_t> vec(sizeof(T) - VTablePtrSize);
 			memcpy(vec.data(), &opcode, sizeof(T) - VTablePtrSize);
@@ -179,7 +182,7 @@ namespace Protocol
 		JoinWorld() = default;
 		JoinWorld(const std::string worldName) : worldName(worldName){}
 
-		std::string worldName;
+		std::string worldName = "";
 
 		virtual std::vector<uint8_t> Serialize() const;
 	};
@@ -187,9 +190,9 @@ namespace Protocol
 	struct RequestChunk : public C2SMessage<RequestChunk>
 	{
 		RequestChunk() = default;
-		RequestChunk(const sf::Vector2i worldName) : chunkPos(chunkPos) {}
+		RequestChunk(const sf::Vector2i chunkPos) : chunkPos(chunkPos) {}
 
-		sf::Vector2i chunkPos;
+		sf::Vector2i chunkPos = sf::Vector2i(0,0);
 	};
 
 	struct UpdatePixel : public C2SMessage<UpdatePixel>
@@ -197,8 +200,8 @@ namespace Protocol
 		UpdatePixel() = default;
 		UpdatePixel(const sf::Vector2i worldPos, const OWOP::Color &pxCol) : worldPos(worldPos),pxColor(pxCol) {}
 
-		sf::Vector2i worldPos;
-		OWOP::Color pxColor;
+		sf::Vector2i worldPos = sf::Vector2i(0, 0);
+		OWOP::Color pxColor = OWOP::Color(0,0,0);
 	};
 
 	struct UpdateCursor : public C2SMessage<UpdateCursor>
@@ -206,9 +209,9 @@ namespace Protocol
 		UpdateCursor() = default;
 		UpdateCursor(const sf::Vector2i subPos, OWOP::ToolID tool = 0, const OWOP::Color &cursorCol = OWOP::Color(255,255,255)) : subPos(subPos), tool(tool), cursorColor(cursorCol) {}
 
-		sf::Vector2i subPos; //in pixel * 16 positions
-		OWOP::Color cursorColor;
-		OWOP::ToolID tool;
+		sf::Vector2i subPos = sf::Vector2i(0,0); //in pixel * 16 positions
+		OWOP::Color cursorColor = OWOP::Color(0,0,0);
+		OWOP::ToolID tool = 0;
 	};
 
 	struct SendChat : public C2SMessage<ChatMessage,true>
@@ -216,7 +219,7 @@ namespace Protocol
 		SendChat() = default;
 		SendChat(const std::string message) : message(message) {}
 
-		std::string message;
+		std::string message = "";
 
 		virtual std::vector<uint8_t> Serialize() const;
 	};

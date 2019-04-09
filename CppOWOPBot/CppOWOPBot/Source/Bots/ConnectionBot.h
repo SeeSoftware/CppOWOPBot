@@ -1,7 +1,11 @@
 #pragma once
 #include <atomic>
+#include <SFML/Graphics.hpp>
 #include "WebsocketppDefs.h"
 #include "IBot.h"
+#include "OWOP/Protocol.h"
+#include "OWOP/Bucket.h"
+#include "SFExtraMath.h"
 
 class ConnectionBot : public IBot
 {
@@ -16,24 +20,39 @@ public:
 	};
 
 	ConnectionBot(BotManager &botManager) : IBot(botManager){}
-	~ConnectionBot();
+	virtual ~ConnectionBot();
 
-	virtual void Connect(const std::string &uri) override;
+	virtual void Connect(const std::string &uri, const std::string &proxyUri = "") override;
 	virtual void Disconnect() override;
 	virtual void Update(float dt) override;
 
+	bool SendPacket(const Protocol::IC2SMessage &message);
+
+	bool JoinWorld(const std::string &worldName);
+
+	bool SendUpdates(const sf::Vector2i &newPos, OWOP::ToolID toolId = 0,const sf::Color &cursorColor = sf::Color(255,255,255));
+	bool PlacePixel(const sf::Vector2i &worldPos, const sf::Color &color);
+	bool RequestChunk(const sf::Vector2i &chunkPos);
+
+	bool SendChat(const std::string &message);
+
+
 	//get connection state
-	ConnectionState GetState();
-	//is connected to owop as cursor
-	bool IsOWOPConnected();
+	ConnectionState GetState() const;
+
+	//WARNING: MIGHT NOT BE THREADSAFE
+	OWOP::CursorData GetCursorData() const;
 
 protected:
 	
-	
+	Bucket mPlaceBucket;
+	OWOP::CursorData mData;
 
-	std::atomic<bool> mOWOPConnected;
 	std::atomic<ConnectionState> mConnectionState;
 	std::string mUri;
+	std::string mProxyUri;
+
+	virtual void MessageHandler(const std::shared_ptr<Protocol::IS2CMessage> &message);
 
 	virtual void WSMessageHandler(Ws::ConnectionHdl hdl, Ws::MessagePtr msg);
 	virtual void WSOpenHandler(Ws::ConnectionHdl hdl);
