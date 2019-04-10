@@ -68,7 +68,7 @@ private:
 
 	mutable std::shared_mutex mMutex;
 
-	std::atomic<bool> mLocked;
+	std::atomic<bool> mLocked = true;
 
 	sf::Vector2i mChunkPos;
 

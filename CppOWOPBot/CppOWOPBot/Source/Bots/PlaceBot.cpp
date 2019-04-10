@@ -17,6 +17,17 @@ void PlaceBot::Update(float dt)
 			Task placeTask;
 			while (taskManager.PopTask(Task::PlacePixel, placeTask))
 			{
+				sf::Vector2i chunkPos = world.WorldToChunk(placeTask.pos);
+				
+				if (!world.ChunkExists(chunkPos))
+				{
+					world.CreateChunk(chunkPos);
+					taskManager.PushTask(Task::Task(Task::RequestChunk, chunkPos));
+				}
+
+				if (world.IsChunkLocked(chunkPos))
+					continue;
+
 				if (world.GetPixel(placeTask.pos) != placeTask.color)
 				{
 					retryPot.PushTask(placeTask);
@@ -39,12 +50,6 @@ void PlaceBot::Update(float dt)
 			}
 		}
 
-		static sf::Clock errorTimeout;
-		if (errorTimeout.getElapsedTime().asSeconds() > 2)
-		{
-			errorTimeout.restart();
-		}
-
 	}
 }
 
@@ -53,8 +58,6 @@ void PlaceBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>& mess
 	ConnectionBot::MessageHandler(message);
 
 	if (mRunWorldHandler)
-	{
 		mManager.GetWorld().HandlePacket(message);
-	}
 }
 

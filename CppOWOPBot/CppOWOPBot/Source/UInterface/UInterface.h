@@ -35,8 +35,6 @@ private:
 	sf::Vector2f mViewCenter;
 	sf::View mDragView;
 
-	sf::Color mColor;
-
 	LuaEnviornment mLuaEnv;
 
 	std::vector<std::shared_ptr<ITool>> mTools;

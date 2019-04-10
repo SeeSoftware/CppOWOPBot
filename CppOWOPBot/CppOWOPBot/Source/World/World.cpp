@@ -117,7 +117,7 @@ bool World::IsChunkLocked(const sf::Vector2i & chunkPos) const
 {
 	std::shared_lock<std::shared_mutex> lock(mMutex);
 	if (mChunks.count(chunkPos) == 0)
-		return false;
+		return true;
 	return mChunks.at(chunkPos)->IsLocked();
 }
 
@@ -148,6 +148,10 @@ std::shared_ptr<Chunk> World::GetChunk(const sf::Vector2i & chunkPos)
 void World::SetPixelUnsafe(const sf::Vector2i & worldPos, const sf::Color & color)
 {
 	sf::Vector2i chunkPos = WorldToChunk(worldPos);
+
+	if (mChunks.count(chunkPos) == 0)
+		return;
+
 	std::shared_ptr<Chunk> chunk = GetChunk(chunkPos);
 	chunk->SetPixel(chunk->WorldToLocalPos(worldPos), color);
 }

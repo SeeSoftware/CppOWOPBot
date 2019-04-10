@@ -1,4 +1,11 @@
 #pragma once
+//saftety things (should probably only be in debug but its better to be safe than sorry :)
+#define SOL_CHECK_ARGUMENTS 1
+/*#define SOL_SAFE_USERTYPE 1
+#define SOL_SAFE_REFERENCES 1
+#define SOL_SAFE_FUNCTION_CALLS 1
+*/
+
 #include <sol.hpp>
 #include <SFML/Graphics.hpp>
 #include <functional>
@@ -17,25 +24,23 @@ public:
 	{
 		InitEnviornment();
 	};
-	~LuaEnviornment() = default;
+	~LuaEnviornment()
+	{
+		mHooks.clear();
+	}
 	
 	bool RunScript(const std::string &script, std::string *errorString = nullptr);
 
 	template<typename ...Args>
 	void RunHook(const std::string &hookName, Args &&...args)
 	{
-		try
+
+		for (auto &x : mHooks[hookName])
 		{
-			for (auto &x : mHooks[hookName])
-			{
-				if (x.second)
-					x.second(std::forward<Args>(args)...);
-			}
+			if (x.second)
+				x.second(std::forward<Args>(args)...);
 		}
-		catch (sol::error &err)
-		{
-			std::cout << err.what() << "\n";
-		}
+
 	}
 
 	sol::state &GetState() { return mState; }
@@ -44,7 +49,7 @@ private:
 
 	void InitEnviornment();
 
-	std::unordered_map<std::string,std::unordered_map<std::string, sol::function>> mHooks;
+	std::unordered_map<std::string,std::unordered_map<std::string, sol::protected_function>> mHooks;
 
 
 	sf::RenderWindow &mTarget;

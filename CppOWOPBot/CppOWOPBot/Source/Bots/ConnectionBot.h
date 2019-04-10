@@ -30,7 +30,7 @@ public:
 
 	bool JoinWorld(const std::string &worldName);
 
-	bool SendUpdates(const sf::Vector2i &newPos, OWOP::ToolID toolId = 0,const sf::Color &cursorColor = sf::Color(255,255,255));
+	bool SendUpdates(const sf::Vector2i &newPos, OWOP::ToolID toolId = 0,const OWOP::Color &cursorColor = sf::Color(255,255,255));
 	bool PlacePixel(const sf::Vector2i &worldPos, const sf::Color &color);
 	bool RequestChunk(const sf::Vector2i &chunkPos);
 

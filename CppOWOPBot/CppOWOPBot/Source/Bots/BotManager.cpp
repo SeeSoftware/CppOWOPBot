@@ -19,7 +19,7 @@ BotManager::BotManager()
 
 		// Initialize ASIO
 		mEndpoint.init_asio();
-		//mEndpoint.set_tls_init_handler(&OnTlsInit);
+		mEndpoint.set_tls_init_handler(&OnTlsInit);
 
 		mEndpoint.start_perpetual();
 

@@ -31,7 +31,7 @@ void UInterface::DrawGui()
 
 		if (ImGui::Button("Add"))
 		{
-			mManager.Connect("ws://104.237.150.24:1337", botAmmount, useProxy); //ws://104.237.150.24:1337 //wss://ourworldofpixels.com
+			mManager.Connect("wss://ourworldofpixels.com", botAmmount, useProxy); //ws://104.237.150.24:1337 //wss://ourworldofpixels.com
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Remove"))
@@ -162,6 +162,12 @@ void UInterface::DrawGui()
 
 			ImGui::InputText("Filename", &scriptFilename);
 
+			
+			if (ImGui::Button("Run"))
+				mLuaEnv.RunScript(editor.GetText());
+
+			ImGui::SameLine(0.0f,20.0f);
+
 			if (ImGui::Button("Load"))
 				loadFile(SavePath + scriptFilename);
 
@@ -170,9 +176,7 @@ void UInterface::DrawGui()
 			if (ImGui::Button("Save"))
 				saveFile(SavePath + scriptFilename);
 
-			ImGui::SameLine();
-			if (ImGui::Button("Run"))
-				mLuaEnv.RunScript(editor.GetText());
+			
 
 			if (ImGui::IsKeyPressed(sf::Keyboard::S, false) && ImGui::GetIO().KeyCtrl) //save pressed
 				saveFile(SavePath + scriptFilename);
@@ -182,8 +186,6 @@ void UInterface::DrawGui()
 
 	}
 	/////
-	
-	mLuaEnv.GetState().set_function("fillColor", sol::property([this]() { return mColor; }, [this](sf::Color set) { mColor = set; }));
 
 }
 
@@ -272,9 +274,9 @@ void UInterface::Update(float dt)
 			if (cont.size() > 0)
 				return;
 
-			for (int y = 0; y < 256; y++)
-				for (int x = 0; x < 256; x++)
-					cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), mColor));
+			for (int y = 0; y < 64; y++)
+				for (int x = 0; x < 64; x++)
+					cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), sf::Color(255,255,255)));
 		});
 	}
 

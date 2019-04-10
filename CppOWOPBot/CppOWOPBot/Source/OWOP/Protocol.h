@@ -224,6 +224,27 @@ namespace Protocol
 		virtual std::vector<uint8_t> Serialize() const;
 	};
 
+	struct ProtectChunk : public C2SMessage<ProtectChunk>
+	{
+		ProtectChunk() = default;
+		ProtectChunk(const sf::Vector2i &chunkPos, bool state = true) : chunkPos(chunkPos),state(state) { }
+
+		sf::Vector2i chunkPos = sf::Vector2i(0,0);
+		bool state = true; //TODO: bool is not allways 1 byte probably better to use uint8_t
+
+		uint8_t _unusedPadding = 0; //for some reason you need 1 byte at the end
+	};
+
+	struct ClearChunk : public C2SMessage<ClearChunk>
+	{
+		ClearChunk() = default;
+		ClearChunk(const sf::Vector2i &chunkPos,const OWOP::Color &fillColor) : chunkPos(chunkPos),fillColor(fillColor) {}
+
+		sf::Vector2i chunkPos = sf::Vector2i(0, 0);
+		OWOP::Color fillColor = OWOP::Color(0, 0, 0);
+
+		uint16_t _unusedPadding = 0; //for some reason you need 2 bytes at the end
+	};
 
 	//todo: protectChunk, setChunk, clearChunk
 

@@ -21,7 +21,7 @@ int main()
 
 	sf::ContextSettings settings;
 	settings.antialiasingLevel = 4;
-	window.create(sf::VideoMode(1280, 720), "OWOP Bot",7U, settings);
+	window.create(sf::VideoMode(1600, 900), "OWOP Bot",7U, settings);
 
 	ImGui::SFML::Init(window);
 
