@@ -5,7 +5,8 @@
 Chunk::Chunk()
 {
 	mTexture.create(OWOP::CHUNK_SIZE, OWOP::CHUNK_SIZE);
-	mTextureData.resize(OWOP::CHUNK_SIZE*OWOP::CHUNK_SIZE,OWOP::NULL_COLOR);
+	mFrontBuffer.resize(OWOP::CHUNK_SIZE*OWOP::CHUNK_SIZE,OWOP::NULL_COLOR);
+	mBackBuffer.resize(OWOP::CHUNK_SIZE*OWOP::CHUNK_SIZE, OWOP::NULL_COLOR);
 	UpdateTexture();
 }
 
@@ -13,30 +14,39 @@ Chunk::Chunk(const sf::Vector2i & chunkPos, bool locked)
 	:mChunkPos(chunkPos), mLocked(locked)
 {
 	mTexture.create(OWOP::CHUNK_SIZE, OWOP::CHUNK_SIZE);
-	mTextureData.resize(OWOP::CHUNK_SIZE*OWOP::CHUNK_SIZE, OWOP::NULL_COLOR);
+	mFrontBuffer.resize(OWOP::CHUNK_SIZE*OWOP::CHUNK_SIZE, OWOP::NULL_COLOR);
+	mBackBuffer.resize(OWOP::CHUNK_SIZE*OWOP::CHUNK_SIZE, OWOP::NULL_COLOR);
 	UpdateTexture();
 }
 
-void Chunk::SetPixel(const sf::Vector2i & localChunkPos, sf::Color color)
+void Chunk::SetPixel(const sf::Vector2i & localChunkPos, sf::Color color, BufferType btype)
 {
 	std::unique_lock<std::shared_mutex> lock(mMutex);
 
-	if (VectorToIndex(localChunkPos) >= mTextureData.size())
+	BufferVec &buffer = SelectBuffer(btype);
+
+	size_t index = VectorToIndex(localChunkPos);
+	if (index >= buffer.size())
 		return;
 
 	color.a = 255;
-	mTextureData[VectorToIndex(localChunkPos)] = color;
-	mDirty = true;
+	buffer[index] = color;
+
+	if(btype == BufferType::Front)
+		mDirty = true;
 }
 
-sf::Color Chunk::GetPixel(const sf::Vector2i & localChunkPos) const
+sf::Color Chunk::GetPixel(const sf::Vector2i & localChunkPos, BufferType btype) const
 {
 	std::shared_lock<std::shared_mutex> lock(mMutex);
 
-	if (VectorToIndex(localChunkPos) >= mTextureData.size())
+	const BufferVec &buffer = SelectBuffer(btype);
+
+	size_t index = VectorToIndex(localChunkPos);
+	if (index >= buffer.size())
 		return OWOP::NULL_COLOR;
 
-	return mTextureData[VectorToIndex(localChunkPos)];
+	return buffer[index];
 }
 
 sf::Vector2i Chunk::LocalToWorldPos(const sf::Vector2i & localChunkPos) const
@@ -70,7 +80,7 @@ void Chunk::LoadFromChunkData(const std::vector<OWOP::Color>& data)
 {
 	std::unique_lock<std::shared_mutex> lock(mMutex);
 	
-	if (data.size() > mTextureData.size())
+	if (data.size() > mFrontBuffer.size() || data.size() > mBackBuffer.size())
 	{
 		std::cout << "LoadFromChunkData: Data is too big, aborting load.\n";
 		return;
@@ -79,11 +89,13 @@ void Chunk::LoadFromChunkData(const std::vector<OWOP::Color>& data)
 	for (int i = 0; i < data.size(); i++)
 	{
 		//TODO: optimize with memcpy
-		mTextureData[i].r = data[i].r;
-		mTextureData[i].g = data[i].g;
-		mTextureData[i].b = data[i].b;
-		mTextureData[i].a = 255;
+		mFrontBuffer[i].r = data[i].r;
+		mFrontBuffer[i].g = data[i].g;
+		mFrontBuffer[i].b = data[i].b;
+		mFrontBuffer[i].a = 255;
 	}
+
+	mBackBuffer = mFrontBuffer;
 
 	mDirty = true;
 }

@@ -7,12 +7,10 @@ void PlaceBot::Update(float dt)
 
 	World &world = mManager.GetWorld();
 	TaskManager &taskManager = mManager.GetTaskManager();
-	TaskManager &retryPot = mManager.GetRetryPot();
 
 	if (mConnectionState >= ConnectionState::Joined)
 	{
-
-		for (int max = 50; max > 0 && mPlaceBucket.CanSpend(1) && taskManager.GetNumTasks(Task::PlacePixel); max--)
+		for (int max = 100; max > 0 && mPlaceBucket.CanSpend(1) && taskManager.GetNumTasks(Task::PlacePixel); max--)
 		{
 			Task placeTask;
 			while (taskManager.PopTask(Task::PlacePixel, placeTask))
@@ -28,14 +26,20 @@ void PlaceBot::Update(float dt)
 				if (world.IsChunkLocked(chunkPos))
 					continue;
 
-				if (world.GetPixel(placeTask.pos) != placeTask.color)
-				{
-					retryPot.PushTask(placeTask);
 
-					if (!PlacePixel(placeTask.pos, placeTask.color))
-						taskManager.PushTask(placeTask);
+				bool brick = false;
+				//world.Update([&,this](UnsafeWorld &uworld)
+				//{
+					if (world.GetPixel(placeTask.pos, Chunk::BufferType::Back) != placeTask.color)
+					{
+						if (!PlacePixel(placeTask.pos, placeTask.color))
+							taskManager.PushTask(placeTask);
+						brick = true; //idk how else to do that ...
+					}
+				//});
+
+				if (brick)
 					break;
-				}
 			}
 		}
 
@@ -49,6 +53,7 @@ void PlaceBot::Update(float dt)
 					taskManager.PushTask(chunkTask);
 			}
 		}
+
 
 	}
 }

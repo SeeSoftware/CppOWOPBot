@@ -62,7 +62,7 @@ namespace OWOP
 		CursorID id;
 		sf::Vector2i subPos; //in pixel * 16 positions
 		Color color;
-		ToolID tool;
+		OWOP::ToolID tool;
 	};
 
 

@@ -10,13 +10,20 @@
 class Chunk
 {
 public:
+
+	enum class BufferType
+	{
+		Front,
+		Back
+	};
+
 	Chunk();
 	Chunk(const sf::Vector2i &chunkPos, bool locked = false);
 
 	//access is threadsafe with unique_lock
-	void SetPixel(const sf::Vector2i &localChunkPos, sf::Color color);
+	void SetPixel(const sf::Vector2i &localChunkPos, sf::Color color, BufferType btype = BufferType::Front);
 	//access is threadsafe with shared_lock
-	sf::Color GetPixel(const sf::Vector2i &localChunkPos) const;
+	sf::Color GetPixel(const sf::Vector2i &localChunkPos, BufferType btype = BufferType::Front) const;
 
 	sf::Vector2i LocalToWorldPos(const sf::Vector2i &localChunkPos) const;
 	sf::Vector2i WorldToLocalPos(const sf::Vector2i &worldPos) const;
@@ -57,22 +64,35 @@ public:
 
 private:
 
+	using BufferVec = std::vector<sf::Color>;
+
 	inline size_t VectorToIndex(const sf::Vector2i &localChunkPos) const
 	{
 		return localChunkPos.x + localChunkPos.y * OWOP::CHUNK_SIZE;
 	}
 	inline void UpdateTexture() const
 	{
-		mTexture.update((sf::Uint8*)mTextureData.data());
+		mTexture.update((sf::Uint8*)mFrontBuffer.data());
 	}
 
+	inline BufferVec &SelectBuffer(BufferType buf)
+	{
+		return buf == BufferType::Front ? mFrontBuffer : mBackBuffer;
+	}
+
+	inline const BufferVec &SelectBuffer(BufferType buf) const
+	{
+		return buf == BufferType::Front ? mFrontBuffer : mBackBuffer;
+	}
+
+
 	mutable std::shared_mutex mMutex;
-
 	std::atomic<bool> mLocked = true;
-
 	sf::Vector2i mChunkPos;
 
-	std::vector<sf::Color> mTextureData;
+
+	BufferVec mFrontBuffer;
+	BufferVec mBackBuffer;
 	mutable sf::Texture mTexture;
 	mutable std::atomic<bool> mDirty;
 };

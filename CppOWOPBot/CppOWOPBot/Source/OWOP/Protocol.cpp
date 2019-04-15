@@ -10,38 +10,66 @@ namespace Protocol
 
 	void WorldUpdate::Deserialize(const std::vector<uint8_t>& data)
 	{
+		///ERRORCHECK
+		if (data.size() < 2)
+		{
+			MalformedPacketError();
+			return;
+		}
+		///ERRORCHECK
+
 		Util::ConstDataView view(data.data(), data.size());
 		opcode = view.GetValue<PacketOpCode>(0);
 
+		///ERRORCHECK
+		if (data.size() < 2 + view.GetValue<uint8_t>(1) * sizeof(OWOP::CursorData))
+		{
+			MalformedPacketError();
+			return;
+		}
+		///ERRORCHECK
+
 		//cursors
 		cursorUpdates.resize(view.GetValue<uint8_t>(1));
-		for (int i = view.GetValue<uint8_t>(1); i--;)
+		for (int i = 0; i < view.GetValue<uint8_t>(1); i++)
 		{
-			OWOP::CursorData cData;
-			memcpy(&cData, data.data() + 2 + i * 16, sizeof(OWOP::CursorData));
-			cursorUpdates[i] = cData;
+			cursorUpdates[i] = view.GetValue<OWOP::CursorData>(2 + i * sizeof(OWOP::CursorData));
 		}
 
 
-		size_t off = 2 + view.GetValue<uint8_t>(1) * 16;
+		size_t off = 2 + view.GetValue<uint8_t>(1) * sizeof(OWOP::CursorData);
+
+		///ERRORCHECK
+		if (data.size() < 2 + off + view.GetValue<uint16_t>(off) * sizeof(OWOP::TileUpdate))
+		{
+			MalformedPacketError();
+			return;
+		}
+		///ERRORCHECK
 
 		//tiles
 		tileUpdates.resize(view.GetValue<uint16_t>(off));
-		for (uint16_t i = view.GetValue<uint16_t>(off), j = 0; j < i; j++)
+		for (uint16_t j = 0; j < view.GetValue<uint16_t>(off); j++) 
 		{
-			OWOP::TileUpdate tData;
-			memcpy(&tData, data.data() + 2 + off + j * 15, sizeof(OWOP::TileUpdate));
-			tileUpdates[j] = tData;
+			tileUpdates[j] = view.GetValue<OWOP::TileUpdate>(2 + off + j * sizeof(OWOP::TileUpdate));
 		}
 
 
 		//disconnects
-		off += view.GetValue<uint16_t>(off) * 15 + 2;
-		disconnects.resize(view.GetValue<uint8_t>(off));
-		for (int i = view.GetValue<uint8_t>(off); i--;)
+		off += view.GetValue<uint16_t>(off) * sizeof(OWOP::TileUpdate) + 2;
+
+		///ERRORCHECK
+		if (data.size() < 1 + off + view.GetValue<uint8_t>(off) * sizeof(OWOP::CursorID))
 		{
-			uint32_t id = view.GetValue<uint32_t>(1 + off + i * 4);
-			disconnects[i] = id;
+			MalformedPacketError();
+			return;
+		}
+		///ERRORCHECK
+
+		disconnects.resize(view.GetValue<uint8_t>(off));
+		for (int i = 0; i < view.GetValue<uint8_t>(off); i++)
+		{
+			disconnects[i] = view.GetValue<OWOP::CursorID>(1 + off + i * sizeof(OWOP::CursorID));
 		}
 
 	}
@@ -93,6 +121,12 @@ namespace Protocol
 
 	void ChunkData::Deserialize(const std::vector<uint8_t>& data)
 	{
+		if (data.size() < 10)
+		{
+			MalformedPacketError();
+			return;
+		}
+
 		compressedData.resize(data.size() - 10);
 		memcpy(&opcode, data.data(), 10); //copies opcode, xy, locked
 		memcpy(compressedData.data(),data.data() + 10, data.size() - 10);
@@ -129,6 +163,12 @@ namespace Protocol
 	std::shared_ptr<IS2CMessage> ParsePacket(const std::vector<uint8_t> &data, Ws::Opcode wsOpcode)
 	{
 		std::shared_ptr<IS2CMessage> msg;
+
+		if (data.size() < 1)
+		{
+			MalformedPacketError();
+			return msg;
+		}
 
 		Util::ConstDataView view(data.data(), data.size());
 		PacketOpCode opcode = view.GetValue<PacketOpCode>(0);

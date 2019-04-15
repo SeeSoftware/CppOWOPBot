@@ -15,7 +15,7 @@ public:
 	virtual void Update(float dt) = 0;
 	
 	virtual std::string ToolName() const = 0;
-	virtual sf::Texture ToolImage() const = 0;
+	virtual sf::Texture &ToolImage() const = 0;
 
 protected:
 

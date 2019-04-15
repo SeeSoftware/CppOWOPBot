@@ -27,6 +27,12 @@ namespace Protocol
 	};
 
 
+	inline void MalformedPacketError()
+	{
+		std::cout << "Malformed packet received!\n";
+		assert(0);
+	}
+
 	//just a simple static cast (just for having cleaner code)
 	template<typename T>
 	std::shared_ptr<T> DowncastMessage(const std::shared_ptr<IS2CMessage> &message)
@@ -94,6 +100,12 @@ namespace Protocol
 		virtual void S2CMessage::Deserialize(const std::vector<uint8_t>& data)
 		{
 			constexpr uintptr_t VTablePtrSize = sizeof(IC2SMessage)-1; //(uintptr_t)&opcode - (uintptr_t)this; //A bit hacky: offsetting memcpy by vtableptr size
+
+			if (data.size() != (sizeof(T) - VTablePtrSize))
+			{
+				MalformedPacketError();
+				return; //TODO: add failiure return
+			}
 
 			memcpy(&opcode, data.data(), std::min(sizeof(T) - VTablePtrSize, data.size()));
 		}

@@ -33,7 +33,8 @@ int main()
 
 	UInterface ui(manager,window);
 	ui.AddTool<ShapeTool>(); 
-
+	ui.AddTool<ShapeTool>();
+	ui.AddTool<ShapeTool>();
 	
 	while (window.isOpen())
 	{

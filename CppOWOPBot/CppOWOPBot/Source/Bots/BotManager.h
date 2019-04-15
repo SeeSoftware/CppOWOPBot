@@ -16,6 +16,7 @@
 #include "ConnectionBot.h"
 #include "World/World.h"
 #include "TaskManager/TaskManager.h"
+#include "TaskManager/PixelCheck.h"
 #include "ProxyManager/Proxylist.h"
 
 class BotManager
@@ -28,7 +29,7 @@ public:
 	void Update(float dt);
 	void Draw(sf::RenderTarget &target) const;
 
-	void GetAllBots(std::function<void(std::vector<std::unique_ptr<ConnectionBot>> &bots)> func);
+	void UpdateBots(std::function<void(std::vector<std::unique_ptr<ConnectionBot>> &bots)> func);
 
 	size_t GetNumBots() const;
 	size_t GetNumBotsInState(const ConnectionBot::ConnectionState &state) const;
@@ -37,7 +38,7 @@ public:
 	World &GetWorld() { return mWorld; }
 	TaskManager &GetTaskManager() { return mTaskManager; }
 	//tasks in retry pot will get reput into the taskManager but with a delay (so you can check if a task was successfully furfilled
-	TaskManager &GetRetryPot() { return mRetryPot; }
+	PixelCheck &GetPixelCheck() { return mPixelCheck; }
 	Proxylist &GetProxyList() { return mProxylist; }
 
 private:
@@ -52,7 +53,7 @@ private:
 
 	World mWorld;
 	TaskManager mTaskManager;
-	TaskManager mRetryPot;
+	PixelCheck mPixelCheck;
 	Proxylist mProxylist;
 
 	Ws::Client mEndpoint;

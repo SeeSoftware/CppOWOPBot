@@ -38,7 +38,7 @@ private:
 	LuaEnviornment mLuaEnv;
 
 	std::vector<std::shared_ptr<ITool>> mTools;
-	std::shared_ptr<ITool> mSelected;
+	std::shared_ptr<ITool> mSelectedTool;
 
 	sf::View mView;
 	sf::RenderWindow &mTarget;

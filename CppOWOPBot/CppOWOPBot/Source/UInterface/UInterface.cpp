@@ -28,15 +28,17 @@ void UInterface::DrawGui()
 			mManager.GetProxyList().SetSettings(cursorsPerProxy);
 
 		ImGui::Checkbox("Use Proxy", &useProxy);
+		ImGui::SameLine();
+		ImGui::Checkbox("Updater", &updaterBot);
 
 		if (ImGui::Button("Add"))
 		{
-			mManager.Connect("wss://ourworldofpixels.com", botAmmount, useProxy); //ws://104.237.150.24:1337 //wss://ourworldofpixels.com
+			mManager.Connect("wss://ourworldofpixels.com", botAmmount, useProxy, updaterBot); //ws://104.237.150.24:1337 //wss://ourworldofpixels.com //ws://desmecito.herokuapp.com
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Remove"))
 		{
-			mManager.GetAllBots([](std::vector<std::unique_ptr<ConnectionBot>> &bots)
+			mManager.UpdateBots([](std::vector<std::unique_ptr<ConnectionBot>> &bots)
 			{
 				for (int i = 0; i < botAmmount && bots.size() > 0; i++)
 				{
@@ -81,7 +83,7 @@ void UInterface::DrawGui()
 	}
 	ImGui::End();
 	////////////////
-
+	
 	///////MISC
 	if (ImGui::Begin("Misc"))
 	{
@@ -96,27 +98,33 @@ void UInterface::DrawGui()
 	ImGui::End();
 	//////////////
 
+	//some imgui thing causes a memory leak pls fix
+
 	/////TOOLS
 	if (ImGui::Begin("Tools"))
 	{
-		for (const auto &x : mTools)
+		
+
+		for (auto &x : mTools)
 		{
 			ImGui::BeginGroup();
 			ImGui::Text(x->ToolName().c_str());
-			ImGui::Image(x->ToolImage(), sf::Color::White, sf::Color::Black);
+			if (ImGui::ImageButton(x->ToolImage(),-1,(x == mSelectedTool) ? sf::Color(0,255,255,100) : sf::Color(0,0,0,0)))
+				mSelectedTool = x;
+
 			ImGui::EndGroup();
 			ImGui::SameLine();
 		}
 	}
 	ImGui::End();
 	////////////////
-
+	
 	////TEXT EDITOR
 	{
 		static TextEditor editor;
 		static bool editorSetup = true;
 		static const std::string SavePath = "Scripts/";
-		static std::string scriptFilename = "Default.lua";
+		static std::string scriptFilename = "Autorun.lua";
 
 		static auto loadFile = [](const std::string &name)
 		{
@@ -186,7 +194,7 @@ void UInterface::DrawGui()
 
 	}
 	/////
-
+	
 }
 
 void UInterface::ProcessEvent(const sf::Event &e)
@@ -243,12 +251,13 @@ void UInterface::ProcessEvent(const sf::Event &e)
 		default:
 			break;
 	}
+	
 }
 
 void UInterface::Update(float dt)
 {
-
 	mLuaEnv.RunHook("THINK",(double)dt);
+	mLuaEnv.RunTimers();
 
 	////Everything after this only runs if we are focused
 	if (!mTarget.hasFocus() || !mIsFocused)
@@ -269,18 +278,28 @@ void UInterface::Update(float dt)
 
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) && !sf::Keyboard::isKeyPressed(sf::Keyboard::LShift))
 	{
-		mManager.GetTaskManager().Update(Task::PlacePixel, [this,&cursorPos](TaskManager::ContainterType &cont)
+		mManager.GetTaskManager().Update([this,&cursorPos](UnsafeTaskManager &taskMgr)
 		{
-			if (cont.size() > 0)
+			if (taskMgr.GetNumTasks(Task::Type::PlacePixel) > 0)
 				return;
 
-			for (int y = 0; y < 64; y++)
-				for (int x = 0; x < 64; x++)
-					cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), sf::Color(255,255,255)));
+			TaskManager::ContainterType &cont = taskMgr.GetTasks()[Task::Type::PlacePixel];
+
+			for(int y = 0; y < 22; y++)
+				for(int x = 0; x < 22; x++)
+					for(int i = 0; i < 48; i++)
+						for(int j = 0; j < 48; j++)
+							cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x*48+j, y*48+i), sf::Color(255, 0, 255)));
+
+
+			/*for (int y = 0; y < 8; y++)
+				for (int x = 0; x < 8; x++)
+					if((x+y)%2 == 0)
+						cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), sf::Color(255,0,255)));*/
 		});
 	}
 
-
+	
 }
 
 void UInterface::StartFullscreen()

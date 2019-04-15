@@ -13,7 +13,8 @@ public:
 	bool Spend(uint32_t num);
 	void Reset();
 
-	uint32_t GetCurrent() { return currrent; }
+	void SetCurrent(uint32_t newCurrent) { mCurrent = newCurrent; }
+	uint32_t GetCurrent() { return mCurrent; }
 
 public:
 	uint32_t Per = 0;
@@ -22,6 +23,6 @@ public:
 private:
 
 	sf::Clock mClock;
-	uint32_t currrent = 0;
-	float accumulator = 0.0f;
+	uint32_t mCurrent = 0;
+	float mAccumulator = 0.0f;
 };

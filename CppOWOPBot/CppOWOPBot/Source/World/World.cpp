@@ -1,15 +1,13 @@
 #include "World.h"
 #include "Util.h"
 
-World::World()
+UnsafeWorld::UnsafeWorld()
 {
 	mToolsTexture.loadFromFile("Images/toolset.png");
 }
 
-void World::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
+void UnsafeWorld::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
-
 	switch (message->opcode)
 	{
 		case Protocol::PacketOpCode::WorldUpdate:
@@ -20,7 +18,10 @@ void World::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
 				mCursors[cd.id] = cd;
 
 			for (OWOP::TileUpdate &tu : castMsg->tileUpdates)
-				SetPixelUnsafe(tu.worldPos, tu.pxCol);
+			{
+				SetPixel(tu.worldPos, tu.pxCol);
+				SetPixel(tu.worldPos, tu.pxCol, Chunk::BufferType::Back);
+			}
 
 			for (OWOP::CursorID &di : castMsg->disconnects)
 				mCursors.erase(di);
@@ -33,6 +34,13 @@ void World::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
 			std::shared_ptr < Protocol::ChunkData > castMsg = Protocol::DowncastMessage<Protocol::ChunkData>(message);
 
 			std::shared_ptr<Chunk> chunk = GetChunk(castMsg->chunkPos);
+
+			if (!chunk)
+			{
+				std::cout << "What the fuck!\n";
+				abort(); //abort before you die!
+			}
+
 			chunk->LoadFromChunkData(castMsg->Decompress());
 			chunk->SetLocked(castMsg->locked);
 			break;
@@ -43,6 +51,13 @@ void World::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
 			std::shared_ptr < Protocol::ChunkProtected > castMsg = Protocol::DowncastMessage<Protocol::ChunkProtected>(message);
 
 			std::shared_ptr<Chunk> chunk = GetChunk(castMsg->chunkPos);
+
+			if (!chunk)
+			{
+				std::cout << "What the fuck!\n";
+				abort(); //abort before you die!
+			}
+
 			chunk->SetLocked(castMsg->newState);
 			break;
 		}
@@ -53,27 +68,37 @@ void World::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
 	}
 }
 
-sf::Color World::GetPixel(const sf::Vector2i & worldPos) const
+sf::Color UnsafeWorld::GetPixel(const sf::Vector2i & worldPos, Chunk::BufferType btype) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
 
 	sf::Vector2i chunkPos = WorldToChunk(worldPos);
 	if (mChunks.count(chunkPos) == 0)
 		return OWOP::NULL_COLOR;
 
 	std::shared_ptr<Chunk> chunk = mChunks.at(chunkPos);
-	return chunk->GetPixel(chunk->WorldToLocalPos(worldPos));
+	return chunk->GetPixel(chunk->WorldToLocalPos(worldPos), btype);
 }
 
-void World::SetPixel(const sf::Vector2i & worldPos, const sf::Color & color)
+void UnsafeWorld::SetPixel(const sf::Vector2i & worldPos, const sf::Color & color, Chunk::BufferType btype)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
-	SetPixelUnsafe(worldPos, color);
+	sf::Vector2i chunkPos = WorldToChunk(worldPos);
+
+	if (mChunks.count(chunkPos) == 0)
+		return;
+
+	std::shared_ptr<Chunk> chunk = GetChunk(chunkPos);
+
+	if (!chunk)
+	{
+		std::cout << "What the fuck!\n";
+		abort(); //abort before you die!
+	}
+
+	chunk->SetPixel(chunk->WorldToLocalPos(worldPos), color, btype);
 }
 
-void World::Draw(sf::RenderTarget & target) const
+void UnsafeWorld::Draw(sf::RenderTarget & target) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
 
 	sf::Vector2i topleft((int)((-target.getView().getSize().x / 2.0f) + target.getView().getCenter().x), (int)((-target.getView().getSize().y / 2.0f) + target.getView().getCenter().y));
 	sf::Vector2i bottomright((int)((target.getView().getSize().x / 2.0f) + target.getView().getCenter().x), (int)((target.getView().getSize().y / 2.0f) + target.getView().getCenter().y));
@@ -100,58 +125,112 @@ void World::Draw(sf::RenderTarget & target) const
 	}
 }
 
-void World::ClearWorld()
+void UnsafeWorld::ClearWorld()
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
 	mChunks.clear();
 	mCursors.clear();
 }
 
-bool World::ChunkExists(const sf::Vector2i & chunkPos) const
+bool UnsafeWorld::ChunkExists(const sf::Vector2i & chunkPos) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
 	return mChunks.count(chunkPos) > 0;
 }
 
-bool World::IsChunkLocked(const sf::Vector2i & chunkPos) const
+bool UnsafeWorld::IsChunkLocked(const sf::Vector2i & chunkPos) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
 	if (mChunks.count(chunkPos) == 0)
 		return true;
 	return mChunks.at(chunkPos)->IsLocked();
 }
 
+void UnsafeWorld::DeleteChunk(const sf::Vector2i & chunkPos)
+{
+	mChunks.erase(chunkPos);
+}
+
+void UnsafeWorld::CreateChunk(const sf::Vector2i & chunkPos)
+{
+	GetChunk(chunkPos);
+}
+
+sf::Vector2i UnsafeWorld::WorldToChunk(const sf::Vector2i & worldPos) const
+{
+	return sf::Vector2i(Util::div_floor(worldPos.x, OWOP::CHUNK_SIZE), Util::div_floor(worldPos.y, OWOP::CHUNK_SIZE));
+}
+
+std::shared_ptr<Chunk> UnsafeWorld::GetChunk(const sf::Vector2i & chunkPos)
+{
+	if (mChunks.count(chunkPos) == 0)
+		mChunks[chunkPos] = std::make_shared<Chunk>(chunkPos);
+	return mChunks.at(chunkPos);
+}
+
+
+
+
+
+
+void World::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
+{
+	std::unique_lock<std::shared_mutex> lock(mMutex);
+	mWorld.HandlePacket(message);
+}
+
+sf::Color World::GetPixel(const sf::Vector2i & worldPos, Chunk::BufferType btype) const
+{
+	std::shared_lock<std::shared_mutex> lock(mMutex);
+	return mWorld.GetPixel(worldPos, btype);
+}
+
+void World::SetPixel(const sf::Vector2i & worldPos, const sf::Color & color, Chunk::BufferType btype)
+{
+	std::unique_lock<std::shared_mutex> lock(mMutex);
+	mWorld.SetPixel(worldPos, color, btype);
+}
+
+void World::Draw(sf::RenderTarget & target) const
+{
+	std::shared_lock<std::shared_mutex> lock(mMutex);
+	mWorld.Draw(target);
+}
+
+void World::ClearWorld()
+{
+	std::unique_lock<std::shared_mutex> lock(mMutex);
+	mWorld.ClearWorld();
+}
+
+bool World::ChunkExists(const sf::Vector2i & chunkPos) const
+{
+	std::shared_lock<std::shared_mutex> lock(mMutex);
+	return mWorld.ChunkExists(chunkPos);
+}
+
+bool World::IsChunkLocked(const sf::Vector2i & chunkPos) const
+{
+	std::shared_lock<std::shared_mutex> lock(mMutex);
+	return mWorld.IsChunkLocked(chunkPos);
+}
+
 void World::DeleteChunk(const sf::Vector2i & chunkPos)
 {
 	std::unique_lock<std::shared_mutex> lock(mMutex);
-	mChunks.erase(chunkPos);
+	return mWorld.DeleteChunk(chunkPos);
 }
 
 void World::CreateChunk(const sf::Vector2i & chunkPos)
 {
 	std::unique_lock<std::shared_mutex> lock(mMutex);
-	GetChunk(chunkPos);
+	return mWorld.CreateChunk(chunkPos);
 }
 
 sf::Vector2i World::WorldToChunk(const sf::Vector2i & worldPos) const
 {
-	return sf::Vector2i(Util::div_floor(worldPos.x, OWOP::CHUNK_SIZE), Util::div_floor(worldPos.y, OWOP::CHUNK_SIZE));
+	return mWorld.WorldToChunk(worldPos);
 }
 
-std::shared_ptr<Chunk> World::GetChunk(const sf::Vector2i & chunkPos)
+void World::Update(std::function<void(UnsafeWorld&)> callback)
 {
-	if (mChunks.count(chunkPos) == 0)
-		mChunks[chunkPos] = std::make_shared<Chunk>(chunkPos);
-	return mChunks[chunkPos];
-}
-
-void World::SetPixelUnsafe(const sf::Vector2i & worldPos, const sf::Color & color)
-{
-	sf::Vector2i chunkPos = WorldToChunk(worldPos);
-
-	if (mChunks.count(chunkPos) == 0)
-		return;
-
-	std::shared_ptr<Chunk> chunk = GetChunk(chunkPos);
-	chunk->SetPixel(chunk->WorldToLocalPos(worldPos), color);
+	std::unique_lock<std::shared_mutex> lock(mMutex);
+	callback(mWorld);
 }

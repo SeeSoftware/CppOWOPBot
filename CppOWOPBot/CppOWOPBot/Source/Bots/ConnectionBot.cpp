@@ -40,7 +40,7 @@ void ConnectionBot::Connect(const std::string &uri, const std::string &proxyUri)
 		}
 
 		if(proxyUri != "")
-			connection->set_proxy("https://"+proxyUri);
+			connection->set_proxy("http://"+proxyUri);
 
 		connection->set_message_handler(bind(&ConnectionBot::WSMessageHandler, this, ::_1, ::_2));
 		connection->set_open_handler(bind(&ConnectionBot::WSOpenHandler, this, ::_1));
@@ -49,7 +49,7 @@ void ConnectionBot::Connect(const std::string &uri, const std::string &proxyUri)
 
 
 		//Spoof stuff
-		connection->append_header("Origin", "http://ourworldofpixels.com"); 
+		connection->append_header("Origin", "https://ourworldofpixels.com"); 
 		connection->replace_header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/67.0.3396.87 Safari/537.36");
 
 		mManager.GetEndpoint().connect(connection);
@@ -81,8 +81,6 @@ void ConnectionBot::Disconnect()
 		//std::cout << "Exception while disconnecting: " << e.what() << std::endl;
 	}
 }
-
-static sf::Clock timer;
 
 void ConnectionBot::Update(float dt)
 {
@@ -152,15 +150,26 @@ bool ConnectionBot::PlacePixel(const sf::Vector2i &worldPos, const sf::Color & c
 
 	if (mConnectionState >= ConnectionState::Joined && mPlaceBucket.Spend(1))
 	{
-		//saves more bandwidth
-		/*float dist = sf::VectorDistance(worldPos / OWOP::CHUNK_SIZE, mData.GetWorldPos() / OWOP::CHUNK_SIZE);
+		mManager.GetWorld().SetPixel(worldPos, color, Chunk::BufferType::Back);
+		mManager.GetPixelCheck().AddPixelToCheck(worldPos);
+
+		/////////////////////////////////////////////////////////////////////////////////////////////
+		
+		/*///saves more bandwidth
+		float dist = sf::VectorDistance(worldPos / OWOP::CHUNK_SIZE, mData.GetWorldPos() / OWOP::CHUNK_SIZE);
 		if (dist >= 3)
 		{
 			sf::Vector2i rpos = sf::Vector2i(Util::div_floor(worldPos.x, OWOP::CHUNK_SIZE), Util::div_floor(worldPos.y, OWOP::CHUNK_SIZE)) / sf::Vector2i(3, 3);
 			SendUpdates(rpos * sf::Vector2i(3 * OWOP::CHUNK_SIZE, 3 * OWOP::CHUNK_SIZE));
-		}*/
+		}
 		
-		//almost silent 
+		Protocol::UpdatePixel msg(worldPos, color);
+
+		return SendPacket(msg);
+		*/
+		//////////////////////////////////////////////////////////////////////////////////////////////
+
+		/*//almost silent 
 		sf::Vector2i oldPos = mData.GetWorldPos();
 
 		Protocol::UpdatePixel msg(worldPos, color);
@@ -170,7 +179,15 @@ bool ConnectionBot::PlacePixel(const sf::Vector2i &worldPos, const sf::Color & c
 			return true;
 		}
 
-		return false;
+		return false;*/
+
+
+		//default
+
+		Protocol::UpdatePixel msg(worldPos, color);
+		return SendUpdates(worldPos) && SendPacket(msg);
+
+
 	}
 	return false;
 }
@@ -213,6 +230,15 @@ void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>&
 {
 	switch (message->opcode)
 	{
+		case Protocol::PacketOpCode::ChatMessage:
+		{
+			std::shared_ptr<Protocol::ChatMessage> castMsg = Protocol::DowncastMessage<Protocol::ChatMessage>(message);
+
+			//std::cout << castMsg->message << "\n";
+
+			break;
+		}
+
 		case Protocol::PacketOpCode::SetID:
 		{
 			//std::cout << "Received SetID\n";
@@ -231,7 +257,7 @@ void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>&
 			std::cout << "rate: " << castMsg->rate << "\n";*/
 
 			mPlaceBucket.Per = castMsg->per;
-			mPlaceBucket.Rate = castMsg->rate;
+			mPlaceBucket.Rate = castMsg->rate-1;
 			mPlaceBucket.Reset();
 
 			mConnectionState = ConnectionState::Joined;
@@ -250,6 +276,9 @@ void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>&
 				case OWOP::CaptchaState::CA_OK:
 					JoinWorld("main");
 					break;
+				default:
+					Disconnect();
+					break;
 			}
 
 			break;
@@ -266,6 +295,10 @@ void ConnectionBot::WSMessageHandler(Ws::ConnectionHdl hdl, Ws::MessagePtr msg)
 {
 	//std::cout << Util::HexDump((uint8_t*)msg->get_payload().data(), msg->get_payload().size()).str();
 	std::shared_ptr<Protocol::IS2CMessage> message = Protocol::ParsePacket(msg);
+
+	if (!message)
+		return;
+
 	MessageHandler(message);
 }
 

@@ -1,6 +1,7 @@
 #pragma once
 //saftety things (should probably only be in debug but its better to be safe than sorry :)
 #define SOL_CHECK_ARGUMENTS 1
+#define SOL_SAFE_NUMERICS 0
 /*#define SOL_SAFE_USERTYPE 1
 #define SOL_SAFE_REFERENCES 1
 #define SOL_SAFE_FUNCTION_CALLS 1
@@ -34,7 +35,6 @@ public:
 	template<typename ...Args>
 	void RunHook(const std::string &hookName, Args &&...args)
 	{
-
 		for (auto &x : mHooks[hookName])
 		{
 			if (x.second)
@@ -43,14 +43,25 @@ public:
 
 	}
 
+	void RunTimers();
+
+
 	sol::state &GetState() { return mState; }
 
 private:
 
+	struct Timer
+	{
+		sf::Clock clock;
+		float delay;
+		int repetitions;
+		sol::protected_function callback;
+	};
+
 	void InitEnviornment();
 
 	std::unordered_map<std::string,std::unordered_map<std::string, sol::protected_function>> mHooks;
-
+	std::unordered_map<std::string, Timer> mTimer;
 
 	sf::RenderWindow &mTarget;
 	BotManager &mManager;

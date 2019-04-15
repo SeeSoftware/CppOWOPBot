@@ -7,7 +7,9 @@
 #include <vector>
 #include <SFML/Graphics.hpp>
 
+#include "TaskManager/Task.h"
 #include "SFExtraMath.h"
+#include "SFLineShape.h"
 #include "Util.h"
 
 bool LuaEnviornment::RunScript(const std::string & script, std::string *errorString)
@@ -17,8 +19,9 @@ bool LuaEnviornment::RunScript(const std::string & script, std::string *errorStr
 		mState.safe_script(script);
 		return true;
 	}
-	catch (const sol::error &)
+	catch (const sol::error & error)
 	{
+		std::cout << "running script error: " << error.what() << "\n";
 		return false;
 	}
 }
@@ -55,6 +58,34 @@ inline void LuaPanic(sol::optional<std::string> maybe_msg)
 	// When this function exits, Lua will exhibit default behavior and abort()
 }
 
+
+void LuaEnviornment::RunTimers()
+{
+	auto it = mTimer.begin();
+	while (it != mTimer.end())
+	{
+		Timer &timer = (*it).second;
+		if (timer.clock.getElapsedTime().asSeconds() >= timer.delay)
+		{
+			if (timer.repetitions > 0 || timer.repetitions == -1)
+			{
+				timer.clock.restart();
+				if (timer.repetitions > 0) // for infinite timers
+					timer.repetitions--;
+
+				if(timer.callback)
+					timer.callback();
+
+			}
+			else
+			{
+				it = mTimer.erase(it);
+				continue;
+			}
+		}
+		++it; //im allways very inconsistant with pre and post increments
+	}
+}
 
 void LuaEnviornment::InitEnviornment()
 {
@@ -214,12 +245,53 @@ void LuaEnviornment::InitEnviornment()
 
 		);
 
+	mState.new_usertype<sf::RenderTexture>("CRenderTarget",
+		sol::constructors <sf::RenderTexture()>(),
 
+		"size", sol::property([](sf::RenderTexture &self) -> sf::Vector2i { return (sf::Vector2i)self.getSize(); }),
+		"width", sol::property([](sf::RenderTexture &self) -> unsigned int { return self.getSize().x; }),
+		"height", sol::property([](sf::RenderTexture &self) -> unsigned int { return self.getSize().y; }),
+
+		"Create", [](sf::RenderTexture &self, unsigned int w, unsigned int h) { self.create(w, h); },
+		
+		"Clear", [](sf::RenderTexture &self, const sf::Color &clearCol) { self.clear(clearCol); },
+		"Update", [](sf::RenderTexture &self) { self.display(); },
+		"GetTexture", [](sf::RenderTexture &self) -> const sf::Texture & { return self.getTexture(); }
+
+	);
+	
+	mState.new_usertype<Task>("CTask",
+		sol::constructors<Task(), Task(Task::Type, const sf::Vector2i &), Task(Task::Type, const sf::Vector2i &, const sf::Color &), Task(Task::Type, const std::string &)>(),
+
+		"type", &Task::type,
+		"pos", &Task::pos,
+		"color", &Task::color,
+		"message", &Task::message
+		);
+
+	mState["Task"] = mState.create_table();
+	mState["Task"][sol::metatable_key] = mState.create_table();
+	mState["Task"][sol::metatable_key][sol::meta_function::call] = [this](sol::object self,sol::variadic_args va) -> auto { return mState["CTask"]["new"](va); };
+
+	mState["Task"]["Type"] = mState.create_table_with(
+		"None", Task::Type::None,
+		"PlacePixel", Task::Type::PlacePixel,
+		"RequestChunk", Task::Type::RequestChunk,
+		"SendChat", Task::Type::SendChat
+	);
+
+	//convinience constructors
 	mState.set_function("Vec2i", [this](sol::variadic_args va) -> auto { return mState["Vector2i"]["new"](va); }); //proabaly unsafe but eh
-	mState.set_function("Vec2f", [this](sol::variadic_args va) -> auto { return mState["Vector2f"]["new"](va); });
-	mState.set_function("Color", [this](sol::variadic_args va) -> auto { return mState["CColor"]["new"](va); });
+	mState.set_function("Vec2f", [this](sol::variadic_args va) -> auto { return mState["Vector2f"]["new"](va); }); 
+	mState.set_function("Color", [this](sol::variadic_args va) -> auto { return mState["CColor"]["new"](va); }); 
 	mState.set_function("Image", [this](sol::variadic_args va) -> auto { return mState["CImage"]["new"](va); });
 	mState.set_function("Texture", [this](sol::variadic_args va) -> auto { return mState["CTexture"]["new"](va); });
+	mState.set_function("RenderTarget", [this](sol::variadic_args va) -> auto { return mState["CRenderTarget"]["new"](va); });
+	//mState.set_function("Task", [this](sol::variadic_args va) -> auto { return mState["CTask"]["new"](va); });
+
+	mState.set_function("PixelTask", [](const sf::Vector2i &pos, const sf::Color &col) -> Task { return Task(Task::Type::PlacePixel, pos, col); });
+	mState.set_function("ChunkTask", [](const sf::Vector2i &chunkPos) -> Task { return Task(Task::Type::RequestChunk, chunkPos); });
+	mState.set_function("ChatTask", [](std::string message) -> Task { return Task(Task::Type::SendChat, message); });
 
 	mState.set_function("HSVColor", [](float h, float s, float v) -> sf::Color
 	{
@@ -255,54 +327,128 @@ void LuaEnviornment::InitEnviornment()
 		RunHook(hookName, va);
 	});
 
+	///////////////////
+	//timer funcs
+
+	sol::table timertbl = mState.create_named_table("timer");
+	
+	timertbl.set_function("Create", [this](std::string id, float delay, int repetitions, sol::protected_function callback)
+	{
+		std::transform(id.begin(), id.end(), id.begin(), ::toupper);
+		mTimer[id] = { sf::Clock(), delay, repetitions == 0 ? -1 : repetitions, callback };
+	});
+
+	timertbl.set_function("Remove", [this](std::string id)
+	{
+		std::transform(id.begin(), id.end(), id.begin(), ::toupper);
+		mTimer.erase(id);
+	});
+
+	timertbl.set_function("Simple", [this](float delay, sol::protected_function callback)
+	{
+		static uint64_t id = 0;
+		mTimer["intern_timer_simple_" + std::to_string(id)] = { sf::Clock(), delay, 1, callback };
+		id++;
+	});
+
+
 	///////////////////////////
 	//render funcs
 	static sf::Color mCurrentDrawCol = sf::Color(255,255,255);
 	static sf::View mOldView;
-	static sf::Texture *mCurrentTexture = nullptr;
+	static sf::Texture * mCurrentTexture;
+	static sf::RenderTarget * mRenderTarget = &mTarget;
 
 	sol::table rendertbl = mState.create_named_table("render");
 	rendertbl.set_function("SetDrawColor", [](const sf::Color &newCol){mCurrentDrawCol = newCol;});
 	rendertbl.set_function("SetTexture", [](sf::Texture &texture) { mCurrentTexture = &texture; });
+	rendertbl.set_function("SetRenderTarget", [this](sol::object target) { if (!target.valid() || !target.is < sf::RenderTexture>()) { mRenderTarget = &mTarget; return; } mRenderTarget = &target.as<sf::RenderTexture>(); });
 	
 	rendertbl.set_function("StartGlobalView", [this]()
 	{
-		mOldView = mTarget.getView();
-		mTarget.setView(mTarget.getDefaultView());
+		if (!mRenderTarget)
+			return;
+
+		mOldView = mRenderTarget->getView();
+		mRenderTarget->setView(mRenderTarget->getDefaultView());
 	});
 
 	rendertbl.set_function("EndGlobalView", [this]()
 	{
-		mTarget.setView(mOldView);
+		if (!mRenderTarget)
+			return;
+
+		mRenderTarget->setView(mOldView);
 	});
 
 
 
 	rendertbl.set_function("DrawRect", [this](float x, float y, float w, float h)
 	{
+		if (!mRenderTarget)
+			return;
+
 		sf::RectangleShape shape(sf::Vector2f(w, h));
 		shape.setPosition(sf::Vector2f(x, y));
 		shape.setFillColor(mCurrentDrawCol);
-		mTarget.draw(shape);
+		mRenderTarget->draw(shape);
+	});
+
+	rendertbl.set_function("DrawCircle", [this](float x, float y, float r)
+	{
+		if (!mRenderTarget)
+			return;
+
+		sf::CircleShape shape(r);
+		shape.setPosition(sf::Vector2f(x, y));
+		shape.setFillColor(mCurrentDrawCol);
+		mRenderTarget->draw(shape);
+	});
+
+	rendertbl.set_function("DrawLine", [this](float x, float y, float x1, float y1, float w = 1.0f)
+	{
+		if (!mRenderTarget)
+			return;
+
+		sf::LineShape shape(sf::Vector2f(x,y), sf::Vector2f(x1,y1), mCurrentDrawCol, w);
+		mRenderTarget->draw(shape);
 	});
 
 	rendertbl.set_function("DrawTexturedRect", [this](float x, float y, float w, float h)
 	{
+		if (!mRenderTarget)
+			return;
+
 		sf::RectangleShape shape(sf::Vector2f(w, h));
 		shape.setPosition(sf::Vector2f(x, y));
 		shape.setFillColor(mCurrentDrawCol);
 		shape.setTexture(mCurrentTexture);
-		mTarget.draw(shape);
+		mRenderTarget->draw(shape);
+	});
+
+	rendertbl.set_function("DrawTexturedCircle", [this](float x, float y, float r)
+	{
+		if (!mRenderTarget)
+			return;
+
+		sf::CircleShape shape(r);
+		shape.setPosition(sf::Vector2f(x, y));
+		shape.setFillColor(mCurrentDrawCol);
+		shape.setTexture(mCurrentTexture);
+		mRenderTarget->draw(shape);
 	});
 
 	rendertbl.set_function("DrawRectOutline", [this](float x, float y, float w, float h, float thickness)
 	{
+		if (!mRenderTarget)
+			return;
+
 		sf::RectangleShape shape(sf::Vector2f(w,h));
 		shape.setPosition(sf::Vector2f(x,y));
 		shape.setFillColor(sf::Color(0, 0, 0, 0));
 		shape.setOutlineColor(mCurrentDrawCol);
 		shape.setOutlineThickness(thickness);
-		mTarget.draw(shape);
+		mRenderTarget->draw(shape);
 	});
 	//////////
 
@@ -387,5 +533,23 @@ void LuaEnviornment::InitEnviornment()
 		return sf::Color((uint8_t)(val.x*255.0f), (uint8_t)(val.y*255.0f), (uint8_t)(val.z*255.0f), (uint8_t)(val.w*255.0f));
 	});
 
+	imguitbl.set_function("Checkbox", [](std::string label, bool state) -> bool
+	{
+		ImGui::Checkbox(label.c_str(), &state);
+		return state;
+	});
+
 	////////////
+
+	//Curtime function
+	mState.set_function("CurTime", []() -> float
+	{
+		static sf::Clock clock;
+		return clock.getElapsedTime().asSeconds();
+	});
+
+
+	///////////////botmanager
+
+
 }

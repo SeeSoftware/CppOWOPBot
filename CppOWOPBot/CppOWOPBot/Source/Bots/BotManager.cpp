@@ -7,6 +7,7 @@
 #include "PlaceBot.h"
 
 BotManager::BotManager()
+	:mPixelCheck(mTaskManager,mWorld)
 {
 	try
 	{
@@ -77,19 +78,9 @@ void BotManager::Update(float dt)
 
 	static sf::Clock retryPotTimer;
 
-	if (retryPotTimer.getElapsedTime().asSeconds() > 2.5f)
+	if (retryPotTimer.getElapsedTime().asSeconds() > 10.0f)
 	{
-		//possible deadlock
-		mRetryPot.Update([this](std::unordered_map<Task::Type, TaskManager::ContainterType> &rMap)
-		{
-			for (auto &x : rMap)
-				mTaskManager.Update(x.first,[&x](TaskManager::ContainterType &cont)
-				{
-					cont.insert(cont.begin(), x.second.begin(), x.second.end());
-					x.second.clear();
-				});
-		});
-
+		mPixelCheck.CheckPixelsAndAddErrorTasks();
 		retryPotTimer.restart();
 	}
 
@@ -102,7 +93,7 @@ void BotManager::Draw(sf::RenderTarget & target) const
 	mWorld.Draw(target);
 }
 
-void BotManager::GetAllBots(std::function<void(std::vector<std::unique_ptr<ConnectionBot>> &bots)> func)
+void BotManager::UpdateBots(std::function<void(std::vector<std::unique_ptr<ConnectionBot>> &bots)> func)
 {
 	std::unique_lock<std::shared_mutex> lock(mMutex);
 	func(mBots);

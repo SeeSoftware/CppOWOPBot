@@ -75,6 +75,9 @@
     <ClCompile Include="Source\Lua\LuaEnviornment.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="Source\TaskManager\PixelCheck.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\OWOP\Structs.h">
@@ -165,6 +168,12 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="Source\Lua\LuaEnviornment.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\SFLineShape.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\TaskManager\PixelCheck.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

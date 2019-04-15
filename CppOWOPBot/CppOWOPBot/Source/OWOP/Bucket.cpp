@@ -6,29 +6,29 @@ void Bucket::Update()
 	float dt = mClock.restart().asSeconds();
 	if (Per == 0.0f)
 	{
-		currrent = std::numeric_limits<int>::max();
+		mCurrent = std::numeric_limits<int>::max();
 		return;
 	}
 
-	accumulator += dt;
+	mAccumulator += dt;
 
 	float timeperone = (1.0f / ((float)Rate / (float)Per));
-	int increment = (uint32_t)floor(accumulator / timeperone);
-	currrent += increment;
-	currrent = std::min(currrent, Rate);
-	accumulator -= (float)increment * timeperone;
+	int increment = (uint32_t)floor(mAccumulator / timeperone);
+	mCurrent += increment;
+	mCurrent = std::min(mCurrent, Rate);
+	mAccumulator -= (float)increment * timeperone;
 }
 
 bool Bucket::CanSpend(uint32_t num) const
 {
-	return currrent >= num;
+	return mCurrent >= num;
 }
 
 bool Bucket::Spend(uint32_t num)
 {
-	if (currrent >= num)
+	if (mCurrent >= num)
 	{
-		currrent -= num;
+		mCurrent -= num;
 		return true;
 	}
 	return false;
@@ -36,7 +36,7 @@ bool Bucket::Spend(uint32_t num)
 
 void Bucket::Reset()
 {
-	accumulator = 0;
-	currrent = 0;
+	mAccumulator = 0;
+	mCurrent = 0;
 	mClock.restart();
 }

@@ -17,12 +17,15 @@ std::string ShapeTool::ToolName() const
 	return "Shape Tool";
 }
 
-sf::Texture ShapeTool::ToolImage() const
+sf::Texture &ShapeTool::ToolImage() const
 {
 	static sf::Texture texture;
 	static bool loaded = false;
 	if (!loaded)
-		texture.loadFromFile("Images/ShapeTool.png"), loaded = true;
+	{
+		texture.loadFromFile("Images/ShapeTool.png");
+		loaded = true;
+	}
 
 	return texture;
 }

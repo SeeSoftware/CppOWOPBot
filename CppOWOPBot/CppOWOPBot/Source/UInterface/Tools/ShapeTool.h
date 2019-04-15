@@ -13,5 +13,5 @@ public:
 	virtual void Update(float dt) override;
 
 	virtual std::string ToolName() const override;
-	virtual sf::Texture ToolImage() const override;
+	virtual sf::Texture &ToolImage() const override;
 };
