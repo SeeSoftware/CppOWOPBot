@@ -28,15 +28,15 @@ void PlaceBot::Update(float dt)
 
 
 				bool brick = false;
-				//world.Update([&,this](UnsafeWorld &uworld)
-				//{
-					if (world.GetPixel(placeTask.pos, Chunk::BufferType::Back) != placeTask.color)
+				world.Update([&,this](UnsafeWorld &uworld)
+				{
+					if (uworld.GetPixel(placeTask.pos, Chunk::BufferType::Back) != placeTask.color)
 					{
 						if (!PlacePixel(placeTask.pos, placeTask.color))
 							taskManager.PushTask(placeTask);
 						brick = true; //idk how else to do that ...
 					}
-				//});
+				});
 
 				if (brick)
 					break;

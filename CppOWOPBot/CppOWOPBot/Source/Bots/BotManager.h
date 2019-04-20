@@ -29,6 +29,8 @@ public:
 	void Update(float dt);
 	void Draw(sf::RenderTarget &target) const;
 
+	//this is dangerous and its easy to cause a deadlock
+	//you MUST NOT call any other function from this instance when inside the callback
 	void UpdateBots(std::function<void(std::vector<std::unique_ptr<ConnectionBot>> &bots)> func);
 
 	size_t GetNumBots() const;

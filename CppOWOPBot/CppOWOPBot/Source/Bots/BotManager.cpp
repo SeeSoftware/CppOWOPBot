@@ -24,7 +24,7 @@ BotManager::BotManager()
 
 		mEndpoint.start_perpetual();
 
-		for(int i = 0; i < 4; i ++)
+		for(int i = 0; i < 6; i ++)
 			mRunThreads.emplace_back(std::thread([this]() { mEndpoint.run(); }));
 	}
 	catch (websocketpp::exception const &)

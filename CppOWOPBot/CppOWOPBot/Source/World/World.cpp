@@ -168,59 +168,66 @@ std::shared_ptr<Chunk> UnsafeWorld::GetChunk(const sf::Vector2i & chunkPos)
 
 
 
-
-
 void World::HandlePacket(const std::shared_ptr<Protocol::IS2CMessage>& message)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mWorld.HandlePacket(message);
 }
 
 sf::Color World::GetPixel(const sf::Vector2i & worldPos, Chunk::BufferType btype) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mWorld.GetPixel(worldPos, btype);
 }
 
 void World::SetPixel(const sf::Vector2i & worldPos, const sf::Color & color, Chunk::BufferType btype)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mWorld.SetPixel(worldPos, color, btype);
 }
 
 void World::Draw(sf::RenderTarget & target) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mWorld.Draw(target);
 }
 
 void World::ClearWorld()
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mWorld.ClearWorld();
 }
 
 bool World::ChunkExists(const sf::Vector2i & chunkPos) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mWorld.ChunkExists(chunkPos);
 }
 
 bool World::IsChunkLocked(const sf::Vector2i & chunkPos) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mWorld.IsChunkLocked(chunkPos);
 }
 
 void World::DeleteChunk(const sf::Vector2i & chunkPos)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mWorld.DeleteChunk(chunkPos);
 }
 
 void World::CreateChunk(const sf::Vector2i & chunkPos)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mWorld.CreateChunk(chunkPos);
 }
 
@@ -231,6 +238,7 @@ sf::Vector2i World::WorldToChunk(const sf::Vector2i & worldPos) const
 
 void World::Update(std::function<void(UnsafeWorld&)> callback)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	callback(mWorld);
 }

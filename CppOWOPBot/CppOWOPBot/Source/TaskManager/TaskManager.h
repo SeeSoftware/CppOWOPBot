@@ -5,7 +5,7 @@
 #include <shared_mutex>
 #include <mutex>
 #include <functional>
-
+#include <atomic>
 
 class UnsafeTaskManager
 {
@@ -54,6 +54,6 @@ public:
 
 private:
 
-	mutable std::shared_mutex mMutex;
+	mutable std::recursive_mutex mMutex; //have to use this because of the update function to prevent double locking but i loose the advantages of a shared_mutex :(
 	UnsafeTaskManager mTaskManager;
 };

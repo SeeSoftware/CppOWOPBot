@@ -127,7 +127,7 @@ bool ConnectionBot::SendUpdates(const sf::Vector2i & newWorldPos, OWOP::ToolID t
 	if (mConnectionState < ConnectionState::Joined)
 		return false;
 
-	mData.subPos = newWorldPos * 16;
+	mData.SetWorldPos(newWorldPos);
 	mData.tool = toolId;
 
 	Protocol::UpdateCursor msg(newWorldPos*16,toolId, cursorColor);
@@ -154,19 +154,23 @@ bool ConnectionBot::PlacePixel(const sf::Vector2i &worldPos, const sf::Color & c
 		mManager.GetPixelCheck().AddPixelToCheck(worldPos);
 
 		/////////////////////////////////////////////////////////////////////////////////////////////
-		
-		/*///saves more bandwidth
-		float dist = sf::VectorDistance(worldPos / OWOP::CHUNK_SIZE, mData.GetWorldPos() / OWOP::CHUNK_SIZE);
-		if (dist >= 3)
+		///saves more bandwidth
+		double distx = (worldPos.x / OWOP::CHUNK_SIZE) - (mData.subPos.x / (OWOP::CHUNK_SIZE * 16)); distx *= distx;
+		double disty = (worldPos.y / OWOP::CHUNK_SIZE) - (mData.subPos.y / (OWOP::CHUNK_SIZE * 16)); disty *= disty;
+		double distance = sqrt(distx + disty);
+	
+		if (distance >= 3)
 		{
-			sf::Vector2i rpos = sf::Vector2i(Util::div_floor(worldPos.x, OWOP::CHUNK_SIZE), Util::div_floor(worldPos.y, OWOP::CHUNK_SIZE)) / sf::Vector2i(3, 3);
-			SendUpdates(rpos * sf::Vector2i(3 * OWOP::CHUNK_SIZE, 3 * OWOP::CHUNK_SIZE));
+			/*sf::Vector2i rpos = sf::Vector2i(Util::div_floor(worldPos.x, OWOP::CHUNK_SIZE), Util::div_floor(worldPos.y, OWOP::CHUNK_SIZE)) / sf::Vector2i(3, 3);
+			SendUpdates(rpos * sf::Vector2i(3 * OWOP::CHUNK_SIZE, 3 * OWOP::CHUNK_SIZE));*/
+
+			SendUpdates(worldPos);
 		}
 		
 		Protocol::UpdatePixel msg(worldPos, color);
 
 		return SendPacket(msg);
-		*/
+		
 		//////////////////////////////////////////////////////////////////////////////////////////////
 
 		/*//almost silent 
@@ -184,8 +188,8 @@ bool ConnectionBot::PlacePixel(const sf::Vector2i &worldPos, const sf::Color & c
 
 		//default
 
-		Protocol::UpdatePixel msg(worldPos, color);
-		return SendUpdates(worldPos) && SendPacket(msg);
+		/*Protocol::UpdatePixel msg(worldPos, color);
+		return SendUpdates(worldPos) && SendPacket(msg);*/
 
 
 	}
@@ -274,7 +278,7 @@ void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>&
 			switch (castMsg->state)
 			{
 				case OWOP::CaptchaState::CA_OK:
-					JoinWorld("main");
+					JoinWorld("voidsim");
 					break;
 				default:
 					Disconnect();

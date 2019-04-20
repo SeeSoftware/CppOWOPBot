@@ -75,50 +75,58 @@ size_t UnsafeTaskManager::GetTotalNumTasks() const
 
 void TaskManager::PushTask(Task task)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mTaskManager.PushTask(task);
 }
 
 void TaskManager::PushTaskFront(Task task)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mTaskManager.PushTaskFront(task);
 }
 
 bool TaskManager::PopTask(Task::Type type, Task & task)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mTaskManager.PopTask(type,task);
 }
 
 void TaskManager::ClearTasks(Task::Type type)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mTaskManager.ClearTasks(type);
 }
 
 void TaskManager::ClearTasks()
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	mTaskManager.ClearTasks();
 }
 
 
 size_t TaskManager::GetNumTasks(Task::Type type) const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mTaskManager.GetNumTasks(type);
 
 }
 
 size_t TaskManager::GetTotalNumTasks() const
 {
-	std::shared_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	return mTaskManager.GetTotalNumTasks();
 }
 
 void TaskManager::Update(std::function<void(UnsafeTaskManager&)> func)
 {
-	std::unique_lock<std::shared_mutex> lock(mMutex);
+	std::unique_lock<std::recursive_mutex> lock(mMutex);
+
 	func(mTaskManager);
 }

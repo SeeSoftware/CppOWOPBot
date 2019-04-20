@@ -91,7 +91,7 @@ public:
 
 	bool GetCursorData(OWOP::CursorID cursorID, OWOP::CursorData &data) const
 	{
-		std::shared_lock<std::shared_mutex> lock(mMutex);
+		std::unique_lock<std::recursive_mutex> lock(mMutex);
 		auto iter = mWorld.GetCursors().find(cursorID);
 		if (iter != mWorld.GetCursors().end())
 		{
@@ -104,12 +104,12 @@ public:
 	//access is threadsafe
 	std::unordered_map<OWOP::CursorID, OWOP::CursorData> GetAllCursors() const
 	{
-		std::shared_lock<std::shared_mutex> lock(mMutex);
+		std::unique_lock<std::recursive_mutex> lock(mMutex);
 		return mWorld.GetCursors();
 	}
 
 private:
 
 	UnsafeWorld mWorld;
-	mutable std::shared_mutex mMutex;
+	mutable std::recursive_mutex mMutex; //have to use this because of the update function to prevent double locking but i loose the advantages of a shared_mutex :(
 };

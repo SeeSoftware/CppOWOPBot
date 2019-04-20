@@ -280,22 +280,24 @@ void UInterface::Update(float dt)
 	{
 		mManager.GetTaskManager().Update([this,&cursorPos](UnsafeTaskManager &taskMgr)
 		{
-			if (taskMgr.GetNumTasks(Task::Type::PlacePixel) > 0)
-				return;
-
 			TaskManager::ContainterType &cont = taskMgr.GetTasks()[Task::Type::PlacePixel];
 
+			/*if (cont.size() > 0)
+				return;*/
+
+			
+			
 			for(int y = 0; y < 22; y++)
 				for(int x = 0; x < 22; x++)
 					for(int i = 0; i < 48; i++)
 						for(int j = 0; j < 48; j++)
-							cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x*48+j, y*48+i), sf::Color(255, 0, 255)));
+							cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x*48+j, y*48+i), sf::Color(255,0,255)));
+							
 
-
-			/*for (int y = 0; y < 8; y++)
-				for (int x = 0; x < 8; x++)
-					if((x+y)%2 == 0)
-						cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), sf::Color(255,0,255)));*/
+			/*for (int y = 0; y < 128; y++)
+				for (int x = 0; x < 128; x++)
+					//if((x+y)%2 == 0)
+						cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), sf::Color(255,0,0)));*/
 		});
 	}
 
