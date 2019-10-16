@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <SFML/Graphics.hpp>
+#include "CompilerSettings.h"
 
 namespace OWOP
 {
@@ -11,7 +12,7 @@ namespace OWOP
 	const sf::Color NULL_COLOR = sf::Color(0, 0, 0, 0);
 	constexpr size_t MAX_WORLDNAME_LENGTH = 24;
 	constexpr int CHUNK_SIZE = 16;
-	constexpr uint16_t WORLD_VERIFICATION = 4321; //4321,1234
+	constexpr uint16_t WORLD_VERIFICATION = 25565; //4321,1234
 	constexpr char CHAT_VERIFICATION[] = "\x0A";
 	constexpr char TOKEN_VERIFICATION[] = "CaptchA";
 
@@ -70,7 +71,10 @@ namespace OWOP
 	{
 		TileUpdate() = default;
 
+#ifndef BOT_USE_OLD_PROTOCOL
+		//ONLY USE IF BOT_USE_OLD_PROTOCOL IS NOT DEFINED
 		CursorID cursorId;
+#endif
 		sf::Vector2i worldPos;
 		Color pxCol;
 	};

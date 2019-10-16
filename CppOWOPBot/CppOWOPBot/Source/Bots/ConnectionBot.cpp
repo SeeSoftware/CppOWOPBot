@@ -2,7 +2,8 @@
 #include "BotManager.h"
 #include "Util.h"
 
-
+std::recursive_mutex ConnectionBot::mConfigMutex;
+float ConnectionBot::mRetryDelay = 5.0f;
 
 ConnectionBot::~ConnectionBot()
 {
@@ -88,6 +89,17 @@ void ConnectionBot::Update(float dt)
 
 	if (mConnectionState == ConnectionState::Disconnected)
 		Connect(mUri, mProxyUri);
+/*	if (mConnectionState == ConnectionState::Disconnected && !mRetrying)
+	{
+		mRetrying = true;
+		mRetryClock.restart();
+	}
+
+	if (mRetrying && mRetryClock.getElapsedTime().asSeconds() >= GetRetryDelay())
+	{
+		Connect(mUri, mProxyUri);
+		mRetrying = false;
+	}*/
 
 }
 
@@ -150,6 +162,7 @@ bool ConnectionBot::PlacePixel(const sf::Vector2i &worldPos, const sf::Color & c
 
 	if (mConnectionState >= ConnectionState::Joined && mPlaceBucket.Spend(1))
 	{
+		//FIX: UNCOMENT LINE BELOW, DID THIS FOR FASTER PIXEL RESPONSE TIME
 		mManager.GetWorld().SetPixel(worldPos, color, Chunk::BufferType::Back);
 		mManager.GetPixelCheck().AddPixelToCheck(worldPos);
 
@@ -164,7 +177,8 @@ bool ConnectionBot::PlacePixel(const sf::Vector2i &worldPos, const sf::Color & c
 			/*sf::Vector2i rpos = sf::Vector2i(Util::div_floor(worldPos.x, OWOP::CHUNK_SIZE), Util::div_floor(worldPos.y, OWOP::CHUNK_SIZE)) / sf::Vector2i(3, 3);
 			SendUpdates(rpos * sf::Vector2i(3 * OWOP::CHUNK_SIZE, 3 * OWOP::CHUNK_SIZE));*/
 
-			SendUpdates(worldPos);
+			if (!SendUpdates(worldPos))
+				return false;
 		}
 		
 		Protocol::UpdatePixel msg(worldPos, color);
@@ -230,6 +244,18 @@ OWOP::CursorData ConnectionBot::GetCursorData() const
 	return mData;
 }
 
+void ConnectionBot::SetRetryDelay(float newDelay)
+{
+	std::lock_guard<std::recursive_mutex> lock(mConfigMutex);
+	mRetryDelay = newDelay;
+}
+
+float ConnectionBot::GetRetryDelay()
+{
+	std::lock_guard<std::recursive_mutex> lock(mConfigMutex);
+	return mRetryDelay;
+}
+
 void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>& message)
 {
 	switch (message->opcode)
@@ -247,6 +273,7 @@ void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>&
 		{
 			//std::cout << "Received SetID\n";
 			std::shared_ptr<Protocol::SetID> castMsg = Protocol::DowncastMessage<Protocol::SetID>(message);
+			mConnectionState = ConnectionState::Joined;
 
 			//std::cout << "id: " << castMsg->id << "\n";
 			break;
@@ -263,8 +290,7 @@ void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>&
 			mPlaceBucket.Per = castMsg->per;
 			mPlaceBucket.Rate = castMsg->rate-1;
 			mPlaceBucket.Reset();
-
-			mConnectionState = ConnectionState::Joined;
+			
 			break;
 		}
 
@@ -275,15 +301,17 @@ void ConnectionBot::MessageHandler(const std::shared_ptr<Protocol::IS2CMessage>&
 
 			//std::cout << "State: " << (int)castMsg->state << "\n";
 
-			switch (castMsg->state)
+			/*switch (castMsg->state)
 			{
 				case OWOP::CaptchaState::CA_OK:
-					JoinWorld("voidsim");
+					JoinWorld("main");
 					break;
 				default:
 					Disconnect();
 					break;
-			}
+			}*/
+
+			JoinWorld("main");
 
 			break;
 		}

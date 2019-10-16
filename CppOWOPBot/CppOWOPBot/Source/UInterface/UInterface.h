@@ -18,10 +18,12 @@ public:
 	template <typename T, typename ...Args>
 	void AddTool(Args &&...args)
 	{
-		mTools.emplace_back(std::make_shared<T>(mManager, mTarget, std::forward<Args>(args)...));
+		mTools.emplace_back(std::make_shared<T>(*this,mManager, mTarget, std::forward<Args>(args)...));
 	}
 
 	LuaEnviornment &GetLuaEnviornment() { return mLuaEnv; }
+
+	bool IsViewActive();
 
 private:
 
@@ -43,5 +45,9 @@ private:
 	sf::View mView;
 	sf::RenderWindow &mTarget;
 	BotManager &mManager;
+
+	ImVec4 colorEditCol;
+	sf::Color fillcol = sf::Color(255, 0, 255);
+
 };
 

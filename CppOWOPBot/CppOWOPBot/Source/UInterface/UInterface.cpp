@@ -10,6 +10,10 @@ void UInterface::DrawGui()
 
 	StartFullscreen();
 	mIsFocused = !ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow) && !ImGui::IsWindowHovered(ImGuiFocusedFlags_AnyWindow);
+
+	if (mSelectedTool)
+		mSelectedTool->DrawGui();
+
 	EndFullscreen();
 
 	///BOT MANAGER
@@ -33,7 +37,7 @@ void UInterface::DrawGui()
 
 		if (ImGui::Button("Add"))
 		{
-			mManager.Connect("wss://ourworldofpixels.com", botAmmount, useProxy, updaterBot); //ws://104.237.150.24:1337 //wss://ourworldofpixels.com //ws://desmecito.herokuapp.com
+			mManager.Connect("wss://ourworldofpixels.com", botAmmount, useProxy, updaterBot); //ws://104.237.150.24:1337 //wss://ourworldofpixels.com //ws://desmecito.herokuapp.com // "ws://vikaowopserver.herokuapp.com"
 		}
 		ImGui::SameLine();
 		if (ImGui::Button("Remove"))
@@ -93,6 +97,11 @@ void UInterface::DrawGui()
 
 		if (ImGui::Button("Clear Tasks"))
 			mManager.GetTaskManager().ClearTasks();
+		
+
+
+		ImGui::ColorEdit3("Fill Color", &colorEditCol.x);
+		fillcol = sf::Color(colorEditCol.x * 255, colorEditCol.y * 255, colorEditCol.z * 255);
 
 	}
 	ImGui::End();
@@ -109,8 +118,13 @@ void UInterface::DrawGui()
 		{
 			ImGui::BeginGroup();
 			ImGui::Text(x->ToolName().c_str());
+
+			ImGui::PushID(&*x);
+
 			if (ImGui::ImageButton(x->ToolImage(),-1,(x == mSelectedTool) ? sf::Color(0,255,255,100) : sf::Color(0,0,0,0)))
 				mSelectedTool = x;
+
+			ImGui::PopID();
 
 			ImGui::EndGroup();
 			ImGui::SameLine();
@@ -252,6 +266,9 @@ void UInterface::ProcessEvent(const sf::Event &e)
 			break;
 	}
 	
+
+	if (mSelectedTool)
+		mSelectedTool->ProcessEvent(e);
 }
 
 void UInterface::Update(float dt)
@@ -259,8 +276,13 @@ void UInterface::Update(float dt)
 	mLuaEnv.RunHook("THINK",(double)dt);
 	mLuaEnv.RunTimers();
 
-	////Everything after this only runs if we are focused
-	if (!mTarget.hasFocus() || !mIsFocused)
+	bool focused = mTarget.hasFocus() && mIsFocused;
+
+	if (mSelectedTool)
+		mSelectedTool->Update(dt);
+
+	////Everything after this only runs if background is focused
+	if (!focused)
 		return;
 
 	////////////////Dragging
@@ -285,23 +307,39 @@ void UInterface::Update(float dt)
 			/*if (cont.size() > 0)
 				return;*/
 
+			/*for (int i = 100; i > 0; i--)
+			{
+				for (int y = 0; y < 512; y++)
+					for (int x = 0; x < 512; x++)
+					{
+						if ((x + y) % i == 0)
+						{
+							cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), sf::Color(255, 0, 255)));
+						}
+					}
+			}*/
+
 			
-			
-			for(int y = 0; y < 22; y++)
+		/*for(int y = 0; y < 22; y++)
 				for(int x = 0; x < 22; x++)
 					for(int i = 0; i < 48; i++)
 						for(int j = 0; j < 48; j++)
 							cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x*48+j, y*48+i), sf::Color(255,0,255)));
-							
+							*/
 
-			/*for (int y = 0; y < 128; y++)
-				for (int x = 0; x < 128; x++)
+			/*for (int y = 0; y < 16; y++)
+				for (int x = 0; x < 16; x++)
 					//if((x+y)%2 == 0)
-						cont.push_back(Task::Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), sf::Color(255,0,0)));*/
+						cont.push_back(Task(Task::PlacePixel, (sf::Vector2i)cursorPos + sf::Vector2i(x, y), fillcol));*/
 		});
 	}
 
 	
+}
+
+bool UInterface::IsViewActive()
+{
+	return mTarget.hasFocus() && mIsFocused && !sf::Keyboard::isKeyPressed(sf::Keyboard::LShift);
 }
 
 void UInterface::StartFullscreen()

@@ -22,32 +22,32 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{A187921F-55EF-41CA-AC5C-2C5733AE9618}</ProjectGuid>
     <RootNamespace>CppOWOPBot</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -138,6 +138,9 @@
     <ClCompile Include="Source\Imgui\TextEditor.cpp" />
     <ClCompile Include="Source\Lua\LuaEnviornment.cpp" />
     <ClCompile Include="Source\TaskManager\PixelCheck.cpp" />
+    <ClCompile Include="Source\UInterface\Tools\Console\ConsoleHelper.cpp" />
+    <ClCompile Include="Source\UInterface\Tools\Console\ConsoleTool.cpp" />
+    <ClCompile Include="Source\UInterface\Tools\ImageTool.cpp" />
     <ClCompile Include="Source\UInterface\Tools\ShapeTool.cpp" />
     <ClCompile Include="Source\UInterface\UInterface.cpp" />
     <ClCompile Include="Source\Main.cpp" />
@@ -154,6 +157,7 @@
     <ClInclude Include="Source\Bots\ConnectionBot.h" />
     <ClInclude Include="Source\Bots\IBot.h" />
     <ClInclude Include="Source\Bots\PlaceBot.h" />
+    <ClInclude Include="Source\CompilerSettings.h" />
     <ClInclude Include="Source\Imgui\imconfig.h" />
     <ClInclude Include="Source\Imgui\imgui.h" />
     <ClInclude Include="Source\Imgui\imgui_internal.h" />
@@ -167,6 +171,9 @@
     <ClInclude Include="Source\Lua\LuaEnviornment.h" />
     <ClInclude Include="Source\SFLineShape.h" />
     <ClInclude Include="Source\TaskManager\PixelCheck.h" />
+    <ClInclude Include="Source\UInterface\Tools\Console\ConsoleHelper.h" />
+    <ClInclude Include="Source\UInterface\Tools\Console\ConsoleTool.h" />
+    <ClInclude Include="Source\UInterface\Tools\ImageTool.h" />
     <ClInclude Include="Source\UInterface\Tools\ITool.h" />
     <ClInclude Include="Source\UInterface\Tools\ShapeTool.h" />
     <ClInclude Include="Source\UInterface\UInterface.h" />

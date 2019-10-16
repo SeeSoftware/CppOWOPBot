@@ -19,7 +19,7 @@ public:
 		Joined //when we are able to send cursor commands
 	};
 
-	ConnectionBot(BotManager &botManager) : IBot(botManager){}
+	ConnectionBot(BotManager &botManager) : IBot(botManager), mPlaceBucket(0,100){}
 	virtual ~ConnectionBot();
 
 	virtual void Connect(const std::string &uri, const std::string &proxyUri = "") override;
@@ -43,6 +43,11 @@ public:
 	//WARNING: MIGHT NOT BE THREADSAFE
 	OWOP::CursorData GetCursorData() const;
 
+
+	//CONFIG
+	static void SetRetryDelay(float newDelay);
+	static float GetRetryDelay();
+
 protected:
 	
 	Bucket mPlaceBucket;
@@ -60,4 +65,14 @@ protected:
 	virtual void WSFailHandler(Ws::ConnectionHdl hdl);
 
 	Ws::ConnectionHdl mConnectionHdl;
+
+private:
+
+	bool mRetrying;
+	sf::Clock mRetryClock;
+
+	//GLOBAL CONFIG
+	static std::recursive_mutex mConfigMutex;
+	static float mRetryDelay;
+
 };

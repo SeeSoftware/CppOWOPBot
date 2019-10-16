@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 
+#include "CompilerSettings.h"
+
 #include <iostream>
 
 #include <SFML/Graphics.hpp>
@@ -11,6 +13,8 @@
 #include "Bots/BotManager.h"
 
 #include "UInterface/Tools/ShapeTool.h"
+#include "UInterface/Tools/ImageTool.h"
+#include "UInterface/Tools/Console/ConsoleTool.h"
 
 int main()
 {
@@ -29,12 +33,12 @@ int main()
 	BotManager manager;
 	manager.GetProxyList().LoadProxyfile("proxylist.txt");
 	manager.GetProxyList().SetSettings(5);
-	manager.Connect("wss://ourworldofpixels.com", 1, false);
+	manager.Connect("wss://ourworldofpixels.com", 1, false); //ws://vikaowopserver.herokuapp.com //wss://ourworldofpixels.com 	//http://vikasowop.000webhostapp.com/
 
 	UInterface ui(manager,window);
 	ui.AddTool<ShapeTool>(); 
-	ui.AddTool<ShapeTool>();
-	ui.AddTool<ShapeTool>();
+	ui.AddTool<ImageTool>();
+	ui.AddTool<ConsoleTool>();
 	
 	while (window.isOpen())
 	{
