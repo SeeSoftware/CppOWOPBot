@@ -78,6 +78,21 @@
     <ClCompile Include="Source\TaskManager\PixelCheck.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="Source\UInterface\Tools\ImageTool.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UInterface\Tools\Console\ConsoleTool.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UInterface\Tools\Console\ConsoleHelper.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UInterface\Tools\ScreenCapture\ScreenCaptureHelper.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UInterface\Tools\ScreenCapture\ScreenCatpureTool.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\OWOP\Structs.h">
@@ -174,6 +189,24 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="Source\TaskManager\PixelCheck.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UInterface\Tools\ImageTool.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UInterface\Tools\Console\ConsoleTool.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UInterface\Tools\Console\ConsoleHelper.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\CompilerSettings.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UInterface\Tools\ScreenCapture\ScreenCaptureHelper.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\UInterface\Tools\ScreenCapture\ScreenCatpureTool.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

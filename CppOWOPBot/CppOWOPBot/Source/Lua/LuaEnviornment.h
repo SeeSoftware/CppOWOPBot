@@ -7,7 +7,7 @@
 #define SOL_SAFE_FUNCTION_CALLS 1
 */
 
-#include <sol.hpp>
+#include <sol/sol.hpp>
 #include <SFML/Graphics.hpp>
 #include <functional>
 #include <unordered_map>

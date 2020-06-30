@@ -4,7 +4,7 @@
 void Bucket::Update()
 {
 	float dt = mClock.restart().asSeconds();
-	if (Per == 0.0f)
+	if (Per == 0)
 	{
 		mCurrent = std::numeric_limits<int>::max();
 		return;

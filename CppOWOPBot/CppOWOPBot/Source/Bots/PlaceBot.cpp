@@ -10,7 +10,7 @@ void PlaceBot::Update(float dt)
 
 	if (mConnectionState >= ConnectionState::Joined)
 	{
-		for (int max = 100; max > 0 && mPlaceBucket.CanSpend(1) && taskManager.GetNumTasks(Task::PlacePixel); max--)
+		for (int max = 1000; max > 0 && mPlaceBucket.CanSpend(1) && taskManager.GetNumTasks(Task::PlacePixel); max--)
 		{
 			Task placeTask;
 			while (taskManager.PopTask(Task::PlacePixel, placeTask))

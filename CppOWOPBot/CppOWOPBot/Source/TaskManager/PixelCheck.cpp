@@ -34,6 +34,6 @@ void PixelCheck::ClearPixels()
 void PixelCheck::ClearPixelsUnsafe()
 {
 	mPixels.clear();
-	if (mPixels.capacity() > 1024 * 16) //increaces performance(?), only shrinks if vector is bigger than 64kb
+	if (mPixels.capacity() > 1024 * 16) //increaces performance(?), only shrinks if vector is bigger than 64k elements
 		mPixels.shrink_to_fit();
 }

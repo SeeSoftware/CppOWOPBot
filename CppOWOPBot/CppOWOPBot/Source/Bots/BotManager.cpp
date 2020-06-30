@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "CompilerSettings.h"
+
 #include "Util.h"
 #include "OWOP/Protocol.h"
 #include "PlaceBot.h"
@@ -20,7 +22,10 @@ BotManager::BotManager()
 
 		// Initialize ASIO
 		mEndpoint.init_asio();
+
+#ifdef BOT_USE_TLS_CLIENT
 		mEndpoint.set_tls_init_handler(&OnTlsInit);
+#endif
 
 		mEndpoint.start_perpetual();
 
@@ -78,7 +83,7 @@ void BotManager::Update(float dt)
 
 	static sf::Clock retryPotTimer;
 
-	if (retryPotTimer.getElapsedTime().asSeconds() > 10.0f)
+	if (retryPotTimer.getElapsedTime().asSeconds() > 5.0f)
 	{
 		mPixelCheck.CheckPixelsAndAddErrorTasks();
 		retryPotTimer.restart();

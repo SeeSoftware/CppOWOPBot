@@ -5,7 +5,7 @@ class ShapeTool : public ITool
 {
 public:
 
-	ShapeTool(BotManager &manager, sf::RenderWindow &target) : ITool(manager,target) {}
+	ShapeTool(UInterface &ui, BotManager &manager, sf::RenderWindow &target) : ITool(ui,manager,target) {}
 
 	// Geerbt über ITool
 	virtual void DrawGui() override;
