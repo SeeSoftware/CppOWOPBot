@@ -27,5 +27,6 @@ A C++ bot for https://ourworldofpixels.com/
 
 1. Get dependencies for SFML, websocketpp, sol and others i didnt bother checking (i recomend using vcpkg)
 2. Open project file
-3. Click build (if you are using vcpkg, otherwise you have to add the dependencies yourself :D )
-4. Profit?
+3. If you didnt use vcpkg add dependencies
+4. Click build
+5. Profit?
